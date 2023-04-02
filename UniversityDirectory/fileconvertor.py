@@ -1,6 +1,7 @@
 from fpdf import FPDF
 
 
+# function that converts text file to pdf file
 def convert_from_text_to_pdf(text_file_path, pdf_file_path):
     # Read the content of the text file as a list of lines
     with open(text_file_path, 'r', encoding="utf8") as f:
