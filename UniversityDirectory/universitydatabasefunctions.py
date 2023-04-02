@@ -3,7 +3,7 @@ import sqlite3
 import fileconvertor
 import hmacfunctions
 
-conn = sqlite3.connect('UniversityDatabase.db')
+conn = sqlite3.connect('UniversityDatabase.txt')
 
 cursor = conn.cursor()
 
