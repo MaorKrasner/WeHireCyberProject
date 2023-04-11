@@ -1,30 +1,30 @@
+import random
 import socket
-import os
+import string
+import threading
 from _thread import *
+import universitydatabasefunctions
 
-PORT_NUMBER = 55555
-
+def session_with_client(client_socket, id_of_student):
+    pass
 
 if __name__ == '__main__':
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        server_socket.bind(("0.0.0.0", PORT_NUMBER))
-    except socket.error as e:
-        print(str(e))
-    print('Server is up and running. Waiting for connection response')
+    # create server socket
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # bind ip and port to socket
+    s.bind(('192.168.0.105', 2358))  # **************************************
+    # set client queue to 5
+    s.listen(10)
 
-    server_socket.listen()
-    (client_socket, client_address) = server_socket.accept()
-    print("Client connected")
+    # server is listening all the time!!!
+    while True:
+        print('server is listening..')
+        client_socket, address = s.accept()
+        print(f'connection from {address} has been established')
 
-    data = client_socket.recv(1024).decode()
-    print("Client sent : " + data)
+        id_of_student = client_socket.recv(1024).decode()
 
-    reply = "Hello " + data
-
-    client_socket.send(reply.encode())
-
-    client_socket.close()
-    server_socket.close()
+        t1 = threading.Thread(target=session_with_client, args=(client_socket,id_of_student))
+        t1.start()
 
 

@@ -2,17 +2,14 @@ import os
 import sqlite3
 import fileconvertor
 import hmacfunctions
-import sys
+import pathlib
 
 conn = sqlite3.connect('UniversityDatabase.db')
 
 cursor = conn.cursor()
 
-university_directory_path = "/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityStudentsDiplomasFolder/"
-
-#def determine_university_directory_path():
-#    if sys.platform == 'darwin':
-
+# university_directory_path = "/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityStudentsDiplomasFolder/"
+university_directory_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + "\\UniversityStudentsDiplomasFolder" + "\\"
 
 
 def insert_row_into_table(table_name, values_tuple):
@@ -41,17 +38,29 @@ def find_student_in_students_table(id_of_student):
     return student_query_result is not None
 
 
-def create_diploma_and_sign_it(id_of_student):
+def find_signing_key_for_diploma(id_of_student):
     if not find_student_in_students_table(id_of_student):
-        return False, None
+        return "0"
+
+    find_key_query = "SELECT Signing_key FROM certificates WHERE Student_ID = " + str(id_of_student) + ";"
+    find_key_query_result = cursor.execute(find_key_query).fetchone()
+    conn.commit()
+    return str(find_key_query_result)
+
+
+def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
+    # if the student is not in the university, return default value and false
+    if not find_student_in_students_table(id_of_student):
+        return False, "Text with nothing in it."
 
     find_student_name_query = "SELECT First ||' '|| Last FROM students WHERE ID = " + str(id_of_student) + ";"
     name_query_res = cursor.execute(find_student_name_query).fetchone()
 
-    path_to_check_if_dimploma_already_exists = "/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityStudentsDiplomasFolder/" + str(name_query_res[0]) + " " + str(id_of_student) + ".pdf"
+    path_to_check_if_diploma_already_exists = university_directory_path + str(name_query_res[0]) + " " + str(id_of_student) + ".pdf"
 
-    if os.path.exists(path_to_check_if_dimploma_already_exists):
-        with open(path_to_check_if_dimploma_already_exists, 'r', encoding="utf8") as f:
+    # means the student already got the diploma from the university and there is no need to sign it again, just to send true and the content
+    if os.path.exists(path_to_check_if_diploma_already_exists):
+        with open(path_to_check_if_diploma_already_exists, 'r', encoding="utf8") as f:
             pdf_file_content = f.read()
         f.close()
 
@@ -74,20 +83,18 @@ def create_diploma_and_sign_it(id_of_student):
         f.write("Student's ID : " + str(id_of_student))
         f.write("\n\n\n-----  GRADES  -----\n\n\n")
         for i in range(1, len(grades_for_courses_list)):
-            f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")
+            f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")  # Course name : Course grade
 
     fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
     f.close()
 
     os.remove(text_file_path)
 
-    key = "secretkey0123456789".encode()
-
     with open(pdf_file_path, 'rb') as pdf_file_to_sign:
         message_to_sign = pdf_file_to_sign.read()
     pdf_file_to_sign.close()
 
-    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(key, message_to_sign)
+    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key, message_to_sign)
 
     print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
 
@@ -104,7 +111,8 @@ def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed
     if not find_student_in_students_table(id_of_student):
         return False
 
-    info_about_student = "SELECT Signed_file_digest, Signing_key from certificates WHERE Student_ID = " + str(id_of_student) + ";"
+    info_about_student = "SELECT Signed_file_digest, Signing_key from certificates WHERE Student_ID = " + str(
+        id_of_student) + ";"
     info_query_result = cursor.execute(info_about_student).fetchone()
 
     original_file_digest = str(info_query_result[0])
@@ -123,59 +131,56 @@ def close_connection():
 
 
 if __name__ == '__main__':
-    relative_path = "UniversityStudentsDiplomasFolder"
-    absolute_path = os.path.abspath(relative_path)
-    print("Absolute path of ", relative_path, " is : ", absolute_path)
-     #cursor.execute("DROP TABLE IF EXISTS certificates")
-     #table = """CREATE TABLE certificates
-     #       (Student_ID VARCHAR(25) PRIMARY KEY NOT NULL,
-     #       Signed_file_name VARCHAR(255) NOT NULL,
-     #       Signed_file_digest VARCHAR(255)  NOT NULL,
-     #       Signing_key VARCHAR(255) NOT NULL
-     #       );"""
+    # cursor.execute("DROP TABLE IF EXISTS certificates")
+    # table = """CREATE TABLE certificates
+    #       (Student_ID VARCHAR(25) PRIMARY KEY NOT NULL,
+    #       Signed_file_name VARCHAR(255) NOT NULL,
+    #       Signed_file_digest VARCHAR(255)  NOT NULL,
+    #       Signing_key VARCHAR(255) NOT NULL
+    #       );"""
 
-     #cursor.execute(table)
+    # cursor.execute(table)
     # cmd = "ALTER TABLE grades DROP INDEX reference_unique;"
     # cursor.execute(cmd)
-     #conn.commit()
+    # conn.commit()
     # insert_row_into_table("students", (213225577, "Tom", "Yanover"))
     # insert_row_into_table("students", (213225578, "Yan", "Vayner"))
     # insert_row_into_table("students", (213225579, "Ofek", "Bassan"))
     # insert_row_into_table("students", (213225580, "Michal", "Shammai"))
     # print_all_rows_in_table("students")
 
-    #current_student_id = 213225577
+    current_student_id = 213225576
 
-    #cursor.execute("DELETE FROM certificates WHERE Student_ID = " + str(current_student_id))
-    #conn.commit()
+    # cursor.execute("DELETE FROM certificates WHERE Student_ID = " + str(current_student_id))
+    # conn.commit()
 
-    #created_or_sent_successfully, pdf_file_content = create_diploma_and_sign_it(current_student_id)
-    #print(created_or_sent_successfully)
+    # created_or_sent_successfully, pdf_file_content = create_diploma_and_sign_it(current_student_id)
+    # print(created_or_sent_successfully)
 
-    #signed_file_name_query = "SELECT Signed_file_name from certificates WHERE Student_ID = " + str(current_student_id) + ";"
-    #signed_file_name_query_result = cursor.execute(signed_file_name_query).fetchall()
+    signed_file_name_query = "SELECT Signed_file_name from certificates WHERE Student_ID = " + str(current_student_id) + ";"
+    signed_file_name_query_result = cursor.execute(signed_file_name_query).fetchall()
 
-    #file_path_to_check = university_directory_path + str(signed_file_name_query_result[0][0])
-    #file_path_to_check = "/Users/maorkrasner/Desktop/Tom Yanover 213225577.pdf"
+    file_path_to_check = university_directory_path + str(signed_file_name_query_result[0][0])
+    # file_path_to_check = "/Users/maorkrasner/Desktop/Tom Yanover 213225577.pdf"
 
-    #with open(file_path_to_check, "rb") as f_to_check:
-    #    message_to_check = f_to_check.read()
-    #    print(str(message_to_check))
+    with open(file_path_to_check, "rb") as f_to_check:
+        message_to_check = f_to_check.read()
+        print(str(message_to_check))
 
-    #print(verify_if_the_certificate_is_real(current_student_id, message_to_check))
+    print(verify_if_the_certificate_is_real(current_student_id, message_to_check))
 
-    #cursor.execute("DELETE FROM certificates")
-    #conn.commit()
+    # cursor.execute("DELETE FROM certificates")
+    # conn.commit()
 
-     #insert_row_into_table("grades", (10, 213225576, 85))
-     #insert_row_into_table("grades", (5, 213225577, 95))
-     #insert_row_into_table("grades", (11, 213225577, 95))
-     #insert_row_into_table("grades", (3, 213225577, 95))
+    # insert_row_into_table("grades", (10, 213225576, 85))
+    # insert_row_into_table("grades", (5, 213225577, 95))
+    # insert_row_into_table("grades", (11, 213225577, 95))
+    # insert_row_into_table("grades", (3, 213225577, 95))
 
-     #insert_row_into_table("grades", (11, 213225578, 95))
-     #insert_row_into_table("grades", (5, 213225579, 85))
-     #insert_row_into_table("grades", (4, 213225580, 97))
-     #insert_row_into_table("grades", (11, 213225576, 93))
+    # insert_row_into_table("grades", (11, 213225578, 95))
+    # insert_row_into_table("grades", (5, 213225579, 85))
+    # insert_row_into_table("grades", (4, 213225580, 97))
+    # insert_row_into_table("grades", (11, 213225576, 93))
     # insert_row_into_table("subjects", (6, "Operating systems"))
     # insert_row_into_table("subjects", (7, "Real time programming"))
     # insert_row_into_table("subjects", (8, "Low level programming in C and Assembly"))
@@ -183,4 +188,4 @@ if __name__ == '__main__':
     # insert_row_into_table("subjects", (10, "Programming in python"))
     # insert_row_into_table("subjects", (11, "Databases and SQL"))
 
-    #conn.commit()
+    # conn.commit()
