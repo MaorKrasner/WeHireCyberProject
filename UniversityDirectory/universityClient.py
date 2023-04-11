@@ -1,7 +1,9 @@
+import os
 import socket
 import string
 import random
-import universitydatabasefunctions
+from universitydatabasefunctions import *
+from my_funcs import *
 
 PORT_NUMBER = 2358
 
@@ -20,12 +22,26 @@ if __name__ == '__main__':
         print(str(e))
     print("Connected to server")
 
-    status_of_person = input("Enter your status")  # It can be either e or c. e stands for employer and c stands for candidate, later we will get it from the db
+    status_of_person = input("Enter e if you are an employer, Enter c if you are candidate : ")
+    while status_of_person != "c" and status_of_person != "e":
+        status_of_person = input("Enter e if you are an employer, Enter c if you are candidate : ")
 
-    id_of_student = input("Enter your ID : ")
+    client_socket.send(status_of_person.encode())
+    answer = client_socket.recv(1024).decode()
+    print(answer)
 
-    print(id_of_student)
+    if status_of_person == "c":
+        id_of_candidate = input("Enter your ID : ")
+        key_to_sign_file_with = create_random_key(random.randint(16, 128))
+        print("Key is : " + key_to_sign_file_with)
+        client_socket.send((id_of_candidate + " " + key_to_sign_file_with).encode())
 
-    client_socket.send(id_of_student.encode())
-
+        signed_file_content = recvall_with_decode(client_socket)
+        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
+        full_diploma_path = desktop_path + "/" + find_signed_file_name(id_of_candidate)
+        print(full_diploma_path)
+        file = open(full_diploma_path, 'a')
+        file.write(signed_file_content)
+        file.close()
+        print("I saved for you the file in : " + desktop_path)
     client_socket.close()

@@ -48,6 +48,13 @@ def find_signing_key_for_diploma(id_of_student):
     return str(find_key_query_result)
 
 
+def find_signed_file_name(id_of_student):
+    file_name_query = "SELECT Signed_file_name FROM certificates WHERE Student_ID = " + str(id_of_student) + ";"
+    file_name_query_result = cursor.execute(file_name_query).fetchone()
+    conn.commit()
+    return str(list(file_name_query_result)[0])
+
+
 def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
     # if the student is not in the university, return default value and false
     if not find_student_in_students_table(id_of_student):
@@ -58,13 +65,14 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
     path_to_check_if_diploma_already_exists = university_directory_path + str(name_query_res[0]) + " " + str(id_of_student) + ".pdf"
 
-    # means the student already got the diploma from the university and there is no need to sign it again, just to send true and the content
+    # means the student already got the diploma from the university and there is no need to sign it again,
+    # just to send true and the content
     if os.path.exists(path_to_check_if_diploma_already_exists):
-        with open(path_to_check_if_diploma_already_exists, 'r', encoding="utf8") as f:
+        with open(path_to_check_if_diploma_already_exists, 'rb', encoding="utf16") as f:
             pdf_file_content = f.read()
         f.close()
 
-        return True, pdf_file_content
+        return True, pdf_file_content.decode()
 
     find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
                                     FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
@@ -94,17 +102,17 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
         message_to_sign = pdf_file_to_sign.read()
     pdf_file_to_sign.close()
 
-    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key, message_to_sign)
+    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
 
     print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
 
-    insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split("/")[-1]), str(pdf_file_sign_digest.hex()), key.decode()))
+    insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split("/")[-1]), str(pdf_file_sign_digest.hex()), signing_verifying_key))
 
-    with open(pdf_file_path, 'r', encoding="utf8") as file_to_send:
+    with open(pdf_file_path, 'rb', encoding="utf16") as file_to_send:
         message_to_send = file_to_send.read()
     file_to_send.close()
 
-    return True, message_to_send
+    return True, message_to_send.decode()
 
 
 def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed):
@@ -152,22 +160,23 @@ if __name__ == '__main__':
     current_student_id = 213225576
 
     # cursor.execute("DELETE FROM certificates WHERE Student_ID = " + str(current_student_id))
-    # conn.commit()
+    cursor.execute("DELETE FROM certificates")
+    conn.commit()
 
     # created_or_sent_successfully, pdf_file_content = create_diploma_and_sign_it(current_student_id)
     # print(created_or_sent_successfully)
 
-    signed_file_name_query = "SELECT Signed_file_name from certificates WHERE Student_ID = " + str(current_student_id) + ";"
-    signed_file_name_query_result = cursor.execute(signed_file_name_query).fetchall()
+    #signed_file_name_query = "SELECT Signed_file_name from certificates WHERE Student_ID = " + str(current_student_id) + ";"
+    #signed_file_name_query_result = cursor.execute(signed_file_name_query).fetchall()
 
-    file_path_to_check = university_directory_path + str(signed_file_name_query_result[0][0])
+    #file_path_to_check = university_directory_path + str(signed_file_name_query_result[0][0])
     # file_path_to_check = "/Users/maorkrasner/Desktop/Tom Yanover 213225577.pdf"
 
-    with open(file_path_to_check, "rb") as f_to_check:
-        message_to_check = f_to_check.read()
-        print(str(message_to_check))
+    #with open(file_path_to_check, "rb") as f_to_check:
+    #    message_to_check = f_to_check.read()
+    #    print(str(message_to_check))
 
-    print(verify_if_the_certificate_is_real(current_student_id, message_to_check))
+    #print(verify_if_the_certificate_is_real(current_student_id, message_to_check))
 
     # cursor.execute("DELETE FROM certificates")
     # conn.commit()
