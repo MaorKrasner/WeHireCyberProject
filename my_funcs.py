@@ -12,18 +12,14 @@ def recvall_with_decode(sock):  # Receive the message
         if len(part) < BUFF_SIZE:
             # either 0 or end of data
             break
-    return data.decode()
+    return data.decode(errors='replace')
 
 
-def recvall(sock):  # Receive the message without decode()
-    BUFF_SIZE = 1024         # 4 KiB
+def recvall_without_decode(sock):  # Receive the message without decode()
+    BUFF_SIZE = 4096  # 4 KiB
     data = b''
     while True:
-        try:
-            part = sock.recv(BUFF_SIZE)
-        except:
-            return -999
-
+        part = sock.recv(BUFF_SIZE)
         data += part
         if len(part) < BUFF_SIZE:
             # either 0 or end of data

@@ -1,4 +1,9 @@
 from fpdf import FPDF
+from io import StringIO
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfinterp import PDFPageInterpreter, PDFResourceManager
+from pdfminer.pdfpage import PDFPage
 
 
 # function that converts text file to pdf file
@@ -17,6 +22,26 @@ def convert_from_text_to_pdf(text_file_path, pdf_file_path):
 
     # Save the PDF file
     pdf.output(pdf_file_path)
+
+
+def convert_from_pdf_to_text(pdf_file_path):
+    with open(pdf_file_path, 'rb') as file:
+        resource_manager = PDFResourceManager()
+        fake_file_handle = StringIO()
+        la_params = LAParams()
+        converter = TextConverter(resource_manager, fake_file_handle, laparams=la_params)
+        page_interpreter = PDFPageInterpreter(resource_manager, converter)
+
+        for page in PDFPage.get_pages(file, check_extractable=True):
+            page_interpreter.process_page(page)
+
+        text = fake_file_handle.getvalue()
+
+    converter.close()
+    fake_file_handle.close()
+
+    if text:
+        return text
 
 
 if __name__ == '__main__':

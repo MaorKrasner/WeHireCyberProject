@@ -1,10 +1,12 @@
 import os
 import sqlite3
+
+import pdfreader
+
 import fileconvertor
 import hmacfunctions
-import pathlib
 
-conn = sqlite3.connect('UniversityDatabase.db')
+conn = sqlite3.connect('UniversityDatabase.db', check_same_thread=False)
 
 cursor = conn.cursor()
 
@@ -68,11 +70,14 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
     # means the student already got the diploma from the university and there is no need to sign it again,
     # just to send true and the content
     if os.path.exists(path_to_check_if_diploma_already_exists):
-        with open(path_to_check_if_diploma_already_exists, 'rb', encoding="utf16") as f:
-            pdf_file_content = f.read()
-        f.close()
+        text_of_pdf = fileconvertor.convert_from_pdf_to_text(path_to_check_if_diploma_already_exists)
+        return True, text_of_pdf.encode()
 
-        return True, pdf_file_content.decode()
+        #with open(path_to_check_if_diploma_already_exists, 'rb') as f:
+        #    pdf_file_content = f.read()
+        #f.close()
+
+        #return True, pdf_file_content
 
     find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
                                     FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
@@ -87,7 +92,7 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
     with open(text_file_path, 'w') as f:
         f.write("University Of Tel Aviv\n\n")
-        f.write("Student's full name : " + str(name_query_res[0]) + "\n\n")
+        f.write("Student's full name : " + str(name_query_res[0]) + "\n")
         f.write("Student's ID : " + str(id_of_student))
         f.write("\n\n\n-----  GRADES  -----\n\n\n")
         for i in range(1, len(grades_for_courses_list)):
@@ -95,8 +100,6 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
     fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
     f.close()
-
-    os.remove(text_file_path)
 
     with open(pdf_file_path, 'rb') as pdf_file_to_sign:
         message_to_sign = pdf_file_to_sign.read()
@@ -106,13 +109,17 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
     print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
 
-    insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split("/")[-1]), str(pdf_file_sign_digest.hex()), signing_verifying_key))
+    sign_to_split_with = "/" if str(pdf_file_path).__contains__("/") else "\\"
 
-    with open(pdf_file_path, 'rb', encoding="utf16") as file_to_send:
+    insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split(sign_to_split_with)[-1]), str(pdf_file_sign_digest.hex()), signing_verifying_key))
+
+    with open(text_file_path, 'rb') as file_to_send:
         message_to_send = file_to_send.read()
     file_to_send.close()
 
-    return True, message_to_send.decode()
+    os.remove(text_file_path)
+
+    return True, message_to_send
 
 
 def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed):
@@ -157,9 +164,10 @@ if __name__ == '__main__':
     # insert_row_into_table("students", (213225580, "Michal", "Shammai"))
     # print_all_rows_in_table("students")
 
-    current_student_id = 213225576
+    #current_student_id = 213225576
 
     # cursor.execute("DELETE FROM certificates WHERE Student_ID = " + str(current_student_id))
+
     cursor.execute("DELETE FROM certificates")
     conn.commit()
 

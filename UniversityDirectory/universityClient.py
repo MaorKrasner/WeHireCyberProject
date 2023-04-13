@@ -14,7 +14,7 @@ def create_random_key(n):
 
 
 if __name__ == '__main__':
-    # TODO : SEPERATE CASES OF STUDENT AND EMPLOYER
+    # TODO : IN C MODE, WHEN THERE IS ALREADY DIPLOMA, CHECK WHY IT ADDS (cid:10)
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
         client_socket.connect(("127.0.0.1", 2358))
@@ -37,11 +37,44 @@ if __name__ == '__main__':
         client_socket.send((id_of_candidate + " " + key_to_sign_file_with).encode())
 
         signed_file_content = recvall_with_decode(client_socket)
-        desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
-        full_diploma_path = desktop_path + "/" + find_signed_file_name(id_of_candidate)
-        print(full_diploma_path)
-        file = open(full_diploma_path, 'a')
-        file.write(signed_file_content)
-        file.close()
-        print("I saved for you the file in : " + desktop_path)
+
+        if signed_file_content != "ID of student didn't show up in the database of the university!":
+            print(signed_file_content)
+            documents_path = os.path.join(os.path.expanduser('~'), 'Documents')
+            print(documents_path)
+
+            sign_of_path = "/" if documents_path.__contains__("/") else "\\"
+            full_diploma_path_pdf = documents_path + sign_of_path + find_signed_file_name(id_of_candidate)
+            full_diploma_path_text = full_diploma_path_pdf.replace(".pdf", ".txt")
+            print(full_diploma_path_pdf)
+            print(full_diploma_path_text)
+
+            with open(full_diploma_path_text, 'w', encoding="utf8") as f:
+                f.write(signed_file_content)
+            f.close()
+
+            fileconvertor.convert_from_text_to_pdf(full_diploma_path_text, full_diploma_path_pdf)
+            os.remove(full_diploma_path_text)
+
+            print("I saved for you the file in : " + documents_path)
+        else:
+            print(signed_file_content)
+
+    else:
+        id_of_candidate = input("Enter the student's ID : ")
+        client_socket.send(id_of_candidate.encode())
+        response_for_id = client_socket.recv(1024).decode()
+        print(response_for_id)
+
+        message_path = input("Enter the full path of the file that the student passed you : ")
+        while not os.path.exists(message_path):
+            print("Path invalid ! Try again.")
+            message_path = input("Enter the full path of the file that the student passed you : ")
+        print("Path valid.")
+        with open(message_path, 'rb') as file_to_check:
+            message_of_file_to_check = file_to_check.read()
+        client_socket.send(message_of_file_to_check)
+        status_response = client_socket.recv(1024).decode()
+        print(status_response)
+
     client_socket.close()
