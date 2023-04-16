@@ -36,7 +36,8 @@ if __name__ == '__main__':
         print("Key is : " + key_to_sign_file_with)
         client_socket.send((id_of_candidate + " " + key_to_sign_file_with).encode())
 
-        signed_file_content = recvall_with_decode(client_socket)
+        #signed_file_content = recvall_with_decode(client_socket)
+        signed_file_content = recvall_without_decode(client_socket)
 
         if signed_file_content != "ID of student didn't show up in the database of the university!":
             print(signed_file_content)
@@ -49,12 +50,23 @@ if __name__ == '__main__':
             print(full_diploma_path_pdf)
             print(full_diploma_path_text)
 
-            with open(full_diploma_path_text, 'w', encoding="utf8") as f:
+            #with open(full_diploma_path_pdf, 'w', encoding="utf8") as f:
+            #    f.write(signed_file_content)
+            #f.close()
+
+            #with open(full_diploma_path_text, 'w') as f:
+            #    f.write(signed_file_content)
+            #f.close()
+
+            with open(full_diploma_path_text, 'wb') as f:
                 f.write(signed_file_content)
             f.close()
 
             fileconvertor.convert_from_text_to_pdf(full_diploma_path_text, full_diploma_path_pdf)
+            #fileconvertor.convert_from_text_to_pdf_pypdf4(full_diploma_path_text, full_diploma_path_pdf)
             os.remove(full_diploma_path_text)
+
+
 
             print("I saved for you the file in : " + documents_path)
         else:
@@ -71,8 +83,11 @@ if __name__ == '__main__':
             print("Path invalid ! Try again.")
             message_path = input("Enter the full path of the file that the student passed you : ")
         print("Path valid.")
+
         with open(message_path, 'rb') as file_to_check:
             message_of_file_to_check = file_to_check.read()
+        #message_of_file_to_check = ''.join(message_of_file_to_check.replace("\n", ""))
+
         client_socket.send(message_of_file_to_check)
         status_response = client_socket.recv(1024).decode()
         print(status_response)

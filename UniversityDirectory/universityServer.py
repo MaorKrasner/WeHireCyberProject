@@ -19,7 +19,8 @@ def session_with_client(sock):
     if status_of_person == "c":
         info_list = client_socket.recv(1024).decode().split(" ")
         id_of_candidate, key_to_sign_diploma = info_list[0], info_list[1]
-        status, message = create_diploma_and_sign_it(id_of_candidate, key_to_sign_diploma)
+        status, message = create_dip_and_sign_it(id_of_candidate, key_to_sign_diploma)
+        #status, message = create_diploma_and_sign_it(id_of_candidate, key_to_sign_diploma)
 
         print("status is : " + str(status))
 
@@ -53,5 +54,5 @@ if __name__ == '__main__':
         client_socket, address = s.accept()
         print(f'connection from {address} has been established')
 
-        t1 = threading.Thread(target=session_with_client, args=client_socket)
+        t1 = threading.Thread(target=session_with_client, args=(client_socket,))
         t1.start()

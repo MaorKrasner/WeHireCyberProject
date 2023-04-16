@@ -70,14 +70,15 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
     # means the student already got the diploma from the university and there is no need to sign it again,
     # just to send true and the content
     if os.path.exists(path_to_check_if_diploma_already_exists):
-        text_of_pdf = fileconvertor.convert_from_pdf_to_text(path_to_check_if_diploma_already_exists)
-        return True, text_of_pdf.encode()
+        with open(path_to_check_if_diploma_already_exists, 'rb') as f:
+            pdf_file_content = f.read()
+        f.close()
 
-        #with open(path_to_check_if_diploma_already_exists, 'rb') as f:
-        #    pdf_file_content = f.read()
-        #f.close()
+        return True, pdf_file_content
 
-        #return True, pdf_file_content
+        #text_of_pdf = fileconvertor.convert_from_pdf_to_text(path_to_check_if_diploma_already_exists)
+        #text_of_pdf = ''.join(text_of_pdf.replace("(cid:10)", ""))
+        #return True, text_of_pdf.encode()
 
     find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
                                     FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
@@ -93,13 +94,15 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
     with open(text_file_path, 'w') as f:
         f.write("University Of Tel Aviv\n\n")
         f.write("Student's full name : " + str(name_query_res[0]) + "\n")
-        f.write("Student's ID : " + str(id_of_student))
-        f.write("\n\n\n-----  GRADES  -----\n\n\n")
+        f.write("Student's ID : " + str(id_of_student) + "\n")
+        f.write("\n\n\n-------------------------------------------------------------  GRADES  -------------------------------------------------------------" + "\n\n\n")
         for i in range(1, len(grades_for_courses_list)):
             f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")  # Course name : Course grade
 
     fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
     f.close()
+
+    os.remove(text_file_path)
 
     with open(pdf_file_path, 'rb') as pdf_file_to_sign:
         message_to_sign = pdf_file_to_sign.read()
@@ -113,13 +116,94 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
     insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split(sign_to_split_with)[-1]), str(pdf_file_sign_digest.hex()), signing_verifying_key))
 
-    with open(text_file_path, 'rb') as file_to_send:
+    with open(pdf_file_path, 'rb') as file_to_send:
         message_to_send = file_to_send.read()
     file_to_send.close()
 
+    return True, message_to_send
+
+
+
+
+
+def create_dip_and_sign_it(id_of_student, signing_verifying_key):
+    # if the student is not in the university, return default value and false
+    if not find_student_in_students_table(id_of_student):
+        return False, "Text with nothing in it."
+
+    find_student_name_query = "SELECT First ||' '|| Last FROM students WHERE ID = " + str(id_of_student) + ";"
+    name_query_res = cursor.execute(find_student_name_query).fetchone()
+
+    path_to_check_if_diploma_already_exists = university_directory_path + str(name_query_res[0]) + " " + str(id_of_student) + ".pdf"
+
+    # means the student already got the diploma from the university and there is no need to sign it again,
+    # just to send true and the content
+    if os.path.exists(path_to_check_if_diploma_already_exists):
+        text = fileconvertor.extract_text_from_pdf(path_to_check_if_diploma_already_exists)
+
+        return True, text.encode()
+
+        '''
+        with open(path_to_check_if_diploma_already_exists, 'r', errors="ignore") as f:
+            pdf_file_content = f.read()
+        f.close()
+
+        return True, pdf_file_content.encode(encoding="utf8")
+        '''
+
+        #text_of_pdf = fileconvertor.convert_from_pdf_to_text(path_to_check_if_diploma_already_exists)
+        #text_of_pdf = ''.join(text_of_pdf.replace("(cid:10)", ""))
+        #return True, text_of_pdf.encode()
+
+    find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
+                                    FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
+                                    ON subjects.Subject_ID = grades.Subject_ID 
+                                    WHERE students.ID = """ + str(id_of_student) + ";"
+    grades_for_courses_list = cursor.execute(find_grades_for_courses_query).fetchall()
+
+    grades_for_courses_list.insert(0, name_query_res)
+
+    text_file_path = university_directory_path + str(name_query_res[0]) + " " + str(id_of_student) + ".txt"
+    pdf_file_path = university_directory_path + str(name_query_res[0]) + " " + str(id_of_student) + ".pdf"
+
+    with open(text_file_path, 'w') as f:
+        f.write("University Of Tel Aviv\n\n")
+        f.write("Student's full name : " + str(name_query_res[0]) + "\n")
+        f.write("Student's ID : " + str(id_of_student) + "\n")
+        f.write("\n\n\n-------------------------------------------------------------  GRADES  -------------------------------------------------------------" + "\n\n\n")
+        for i in range(1, len(grades_for_courses_list)):
+            f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")  # Course name : Course grade
+
+    #fileconvertor.convert_from_text_to_pdf_pypdf4(text_file_path, pdf_file_path)
+
+    fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
+    f.close()
+
     os.remove(text_file_path)
 
-    return True, message_to_send
+    with open(pdf_file_path, 'rb') as pdf_file_to_sign:
+        message_to_sign = pdf_file_to_sign.read()
+    pdf_file_to_sign.close()
+
+    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
+
+    print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
+
+    sign_to_split_with = "/" if str(pdf_file_path).__contains__("/") else "\\"
+
+    insert_row_into_table("certificates", (id_of_student, str(pdf_file_path.split(sign_to_split_with)[-1]), str(pdf_file_sign_digest.hex()), signing_verifying_key))
+
+    text = fileconvertor.extract_text_from_pdf(pdf_file_path)
+
+    return True, text.encode()
+
+    '''
+    with open(pdf_file_path, 'r', errors="ignore") as file_to_send:
+        message_to_send = file_to_send.read()
+    file_to_send.close()
+
+    return True, message_to_send.encode(encoding="utf8")
+    '''
 
 
 def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed):
