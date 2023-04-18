@@ -26,11 +26,11 @@ class chat_application_info_page:
     def _setup_main_window(self):
         self.window.title("We Hire - INFO page")
         self.window.resizable(width=False, height=False)
-        self.window.configure(width=470, height=550, bg=BG_COLOR)
+        self.window.configure(width=720, height=550, bg=BG_COLOR)
 
         user_name = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                          text='INFO:', font="Helvetica 20 bold", ).place(x=185, y=10)
-        line1 = Label(self.window, bg=BG_GRAY).place(x=184, y=45, width=80, height=4)
+                          text='INFO:', font="Helvetica 20 bold", ).place(x=320, y=10)
+        line1 = Label(self.window, bg=BG_GRAY).place(x=320, y=45, width=80, height=4)
 
         online1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                         text='!online:', font="Helvetica 15 bold").place(x=10,
@@ -43,32 +43,33 @@ class chat_application_info_page:
                              text='!room online:', font="Helvetica 15 bold").place(
             x=10, y=85)
         room_online2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                             text='Displays all users connected to your', font="Helvetica 15").place(
+                             text='Displays all users connected to your room.', font="Helvetica 15").place(
             x=140, y=85)
-        room_online3 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                             text='room.', font="Helvetica 15").place(
-            x=140, y=115)
 
         profile1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                         text='!profile:',
                         font="Helvetica 15 bold").place(x=10, y=145)
         profile2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='And then to who(username), displays the',
+                         text='And then to who(username), displays the data of this user.',
                          font="Helvetica 15").place(x=90, y=145)
-        profile3 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='data of this user.',
-                         font="Helvetica 15").place(x=90, y=175)
 
         private1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                          text='!private:', font="Helvetica 15 bold").place(x=10, y=205)
         private2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='And then to who(username), will start a', font="Helvetica 15").place(x=95, y=205)
-        private3 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='private session with this user.',
-                         font="Helvetica 15").place(x=95, y=235)
+                         text='And then to who(username), will start a private session with this user.', font="Helvetica 15").place(x=95, y=205)
+
+        sign1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                      text='!SIGN:', font="Helvetica 15 bold").place(x=10, y=265)
+        sign2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                      text='create diploma and sign it (for candidate only!)', font="Helvetica 15 bold").place(x=80, y=265)
+
+        verify1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                      text='!VERIFY:', font="Helvetica 15 bold").place(x=10, y=295)
+        verify2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                      text='check if diploma is real (for employer only!)', font="Helvetica 15 bold").place(x=100, y=295)
 
         login_b = Button(self.window, text='Close', font="Helvetica 35 bold", command=lambda: self.close())
-        login_b.place(x=150, y=400, width=200, height=70)
+        login_b.place(x=250, y=430, width=200, height=70)
 
 
 if __name__ == "__main__":

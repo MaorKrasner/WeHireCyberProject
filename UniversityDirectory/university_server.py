@@ -1,12 +1,7 @@
-import os.path
-import pathlib
-import random
 import socket
-import string
 import threading
-from _thread import *
-from universitydatabasefunctions import *
-from my_funcs import *
+from university_database_management import *
+from ChatDirectory.my_funcs import *
 
 
 def session_with_client(sock):
@@ -31,7 +26,7 @@ def session_with_client(sock):
     else:
         id_of_candidate = sock.recv(1024).decode()
         sock.send(("Server Received id : " + id_of_candidate).encode())
-        binary_file_to_check_content = recvall_without_decode(sock)
+        binary_file_to_check_content = receive_data(sock)
         status = verify_if_the_certificate_is_real(id_of_candidate, binary_file_to_check_content)
         if status:
             sock.send("The student's diploma is real".encode())

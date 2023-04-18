@@ -38,7 +38,7 @@ class ChatApplication:
     def _setup_main_window(self):
         self.window.title("Chat")
         self.window.resizable(width=False, height=False)
-        self.window.configure(width=470, height=550, bg=BG_COLOR)
+        self.window.configure(width=720, height=550, bg=BG_COLOR)
 
         # head label
         head_label = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
@@ -64,7 +64,7 @@ class ChatApplication:
         self.text_widget.configure(cursor="arrow", state=DISABLED)
 
         self.text_widget.configure(state=NORMAL)
-        self.text_widget.insert(END, 'send !INFO to see info')
+        self.text_widget.insert(END, 'send !INFO to see info, send !VERIFY to check if a diploma is real')
         self.text_widget.insert(END, '\n')
         self.text_widget.configure(state=DISABLED)
         self.text_widget.see(END)
@@ -98,7 +98,7 @@ class ChatApplication:
     def on_enter_pressed(self, event):
         msg = self.msg_entry.get()
         self.msg_entry.delete(0, END)
-        #self.insert_message(msg)
+        self.insert_message(msg)
 
     def insert_message(self, msg):
         if not msg or [x for x in msg] == [' ' for x in range(len(msg))]:

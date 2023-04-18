@@ -3,8 +3,8 @@ import sqlite3
 
 import pdfreader
 
-import fileconvertor
-import hmacfunctions
+import file_convertor
+import my_hmac_functions
 
 conn = sqlite3.connect('UniversityDatabase.db', check_same_thread=False)
 

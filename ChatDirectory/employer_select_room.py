@@ -1,5 +1,5 @@
 from tkinter import *
-import client_gui
+import candidate_gui
 #import client_chat
 
 
@@ -23,7 +23,7 @@ class chat_application_select_room_page:
         self.window.destroy()
 
     def _setup_main_window(self):
-        self.window.title("We Hire - Select room page")
+        self.window.title("We Hire - Select room page for employers")
         self.window.resizable(width=False, height=False)
         self.window.configure(width=470, height=550, bg=BG_COLOR)
 

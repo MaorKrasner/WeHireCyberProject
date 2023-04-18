@@ -5,7 +5,7 @@ from tkinter import *
 #from client_select_room_gui import *
 
 # from chat import get_response, bot_name
-from ChatDirectory.client_select_room import chat_application_select_room_page
+from ChatDirectory.candidate_select_room import chat_application_select_room_page
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"

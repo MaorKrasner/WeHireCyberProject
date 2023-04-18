@@ -3,7 +3,7 @@ import math
 from decimal import *
 
 
-def recvall_with_decode(sock):  # Receive the message
+def receive_data_with_decode(sock):  # Receive the message
     BUFF_SIZE = 4096         # 4 KiB
     data = b''
     while True:
@@ -15,7 +15,7 @@ def recvall_with_decode(sock):  # Receive the message
     return data.decode(errors='replace')
 
 
-def recvall_without_decode(sock):  # Receive the message without decode()
+def receive_data(sock):  # Receive the message without decode()
     BUFF_SIZE = 4096  # 4 KiB
     data = b''
     while True:
@@ -70,6 +70,7 @@ def rsa_encryption_decryption(pq, key, msg):
 def to_ascii(text):
     ascii_values = [ord(character) for character in text]
     return ascii_values
+
 
 def add_element_in_tuple(t, i, num):
     ll = list(t)

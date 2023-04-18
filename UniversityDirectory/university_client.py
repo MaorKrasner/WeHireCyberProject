@@ -1,9 +1,8 @@
-import os
 import socket
 import string
 import random
-from universitydatabasefunctions import *
-from my_funcs import *
+from university_database_management import *
+from ChatDirectory.my_funcs import *
 
 PORT_NUMBER = 2358
 
@@ -20,7 +19,7 @@ if __name__ == '__main__':
         client_socket.connect(("127.0.0.1", 2358))
     except socket.error as e:
         print(str(e))
-    print("Connected to server")
+    print("Connected to server םכ ומןהקרדןאט")
 
     status_of_person = input("Enter e if you are an employer, Enter c if you are candidate : ")
     while status_of_person != "c" and status_of_person != "e":
@@ -37,7 +36,7 @@ if __name__ == '__main__':
         client_socket.send((id_of_candidate + " " + key_to_sign_file_with).encode())
 
         #signed_file_content = recvall_with_decode(client_socket)
-        signed_file_content = recvall_without_decode(client_socket)
+        signed_file_content = receive_data(client_socket)
 
         if signed_file_content != "ID of student didn't show up in the database of the university!":
             print(signed_file_content)

@@ -1,5 +1,5 @@
 import os.path
-from MySHA256 import Sha256
+from my_sha256 import Sha256
 from datetime import datetime
 
 
