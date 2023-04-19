@@ -99,7 +99,7 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
         for i in range(1, len(grades_for_courses_list)):
             f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")  # Course name : Course grade
 
-    fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
+    file_convertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
     f.close()
 
     os.remove(text_file_path)
@@ -108,7 +108,7 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
         message_to_sign = pdf_file_to_sign.read()
     pdf_file_to_sign.close()
 
-    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
+    pdf_file_sign_digest = my_hmac_functions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
 
     print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
 
@@ -139,7 +139,7 @@ def create_dip_and_sign_it(id_of_student, signing_verifying_key):
     # means the student already got the diploma from the university and there is no need to sign it again,
     # just to send true and the content
     if os.path.exists(path_to_check_if_diploma_already_exists):
-        text = fileconvertor.extract_text_from_pdf(path_to_check_if_diploma_already_exists)
+        text = file_convertor.extract_text_from_pdf(path_to_check_if_diploma_already_exists)
 
         return True, text.encode()
 
@@ -174,7 +174,7 @@ def create_dip_and_sign_it(id_of_student, signing_verifying_key):
         for i in range(1, len(grades_for_courses_list)):
             f.write(str(grades_for_courses_list[i][0]) + " : " + str(grades_for_courses_list[i][1]) + "\n")  # Course name : Course grade
 
-    #fileconvertor.convert_from_text_to_pdf_pypdf4(text_file_path, pdf_file_path)
+    #file_convertor.convert_from_text_to_pdf_pypdf4(text_file_path, pdf_file_path)
 
     fileconvertor.convert_from_text_to_pdf(text_file_path, pdf_file_path)
     f.close()

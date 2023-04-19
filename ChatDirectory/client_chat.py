@@ -1,3 +1,7 @@
+import random
+import socket
+
+from ChatDirectory import my_funcs
 from client_start_gui import *
 #from client_login_gui import *
 #from client_create_account_gui import *
