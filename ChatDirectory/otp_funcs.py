@@ -14,7 +14,10 @@ class SetSeed:
 
     def my_random_pad_generator(self, a, b, len_key, final_key):
         while len_key != 0:
-            a_s = int((str(a) + str(self.start_seed))+(str(a) + str(self.start_seed))[4])
+            print ("a : " + str(a))
+            print("start seed : " + str(self.start_seed))
+            a_s = int((str(a) + str(self.start_seed))+(str(a) + str(self.start_seed))[4]) # string index out of range
+            print(a_s)
             self.start_seed = (a_s + b) % (2 ** 32)
             if (self.start_seed % 2) == 0:
                 final_key.append(format(1, 'b'))

@@ -1,5 +1,6 @@
 from tkinter import *
 #from client_chat import *
+from ChatDirectory.client_chat import *
 from ChatDirectory.employer_create_account_page_gui import chat_application_create_account_employer_page
 from client_login_page_gui import *
 from candidate_create_account_page_gui import *
@@ -46,21 +47,21 @@ class chat_application_start_page:
 
     def login_b(self):
         pass
-        #start_func('1')
+        start_func('1')
         self.close()
         app_login = client_login_page_gui.chat_application_login_page()
         app_login.run()
 
     def create_candidate_b(self):
         pass
-        #start_func('2')
+        start_func('2')
         self.close()
         app_create_account = chat_application_create_account_candidate_page()
         app_create_account.run()
 
     def create_employer_b(self):
         pass
-        #start_func('3')
+        start_func('2')
         self.close()
         app_create_account = chat_application_create_account_employer_page()
         app_create_account.run()

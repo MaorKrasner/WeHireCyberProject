@@ -5,7 +5,9 @@ from tkinter import *
 #from client_select_room_gui import *
 
 # from chat import get_response, bot_name
-from ChatDirectory.candidate_select_room import chat_application_select_room_page
+#from ChatDirectory.candidate_select_room import chat_application_select_room_page
+import select_room_gui
+from ChatDirectory import client_chat
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
@@ -54,11 +56,11 @@ class chat_application_login_page:
         login_b.place(x=150, y=300, width=200, height=70)
 
     def login(self):
-        #success = client_chat.login_func(self.e_user_name.get(), self.e_password.get())
+        success = client_chat.login_func(self.e_user_name.get(), self.e_password.get())
         success = True
         if success:
             self.close()
-            app_choose_room = chat_application_select_room_page()
+            app_choose_room = select_room_gui.chat_application_select_room_page()
             app_choose_room.run()
         else:
             self.e_user_name.delete(0, END)

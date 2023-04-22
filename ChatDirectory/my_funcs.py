@@ -4,7 +4,7 @@ from decimal import *
 
 
 def receive_data_with_decode(sock):  # Receive the message
-    BUFF_SIZE = 4096         # 4 KiB
+    BUFF_SIZE = 4096  # 4 KiB
     data = b''
     while True:
         part = sock.recv(BUFF_SIZE)
@@ -12,14 +12,18 @@ def receive_data_with_decode(sock):  # Receive the message
         if len(part) < BUFF_SIZE:
             # either 0 or end of data
             break
-    return data.decode(errors='replace')
+    return data.decode()
 
 
 def receive_data(sock):  # Receive the message without decode()
-    BUFF_SIZE = 4096  # 4 KiB
+    BUFF_SIZE = 1024  # 4 KiB
     data = b''
     while True:
-        part = sock.recv(BUFF_SIZE)
+        try:
+            part = sock.recv(BUFF_SIZE)
+        except:
+            return -999
+
         data += part
         if len(part) < BUFF_SIZE:
             # either 0 or end of data

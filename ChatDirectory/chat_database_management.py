@@ -24,15 +24,15 @@ def delete_rec_from_client_user_table(user_name_to_delete):
 
 
 def show_type_of_client_user(user_name):
-    result = my_cursor.execute(f'select user_type from client_user where user_name like "{user_name}"').fetchone()
+    result = my_cursor.execute(f'''select user_type from client_user where user_name = "{user_name}"''').fetchall()
     db.commit()
-    return str(list(result)[0])
+    return str(result[0])
 
 
 def show_password_of_specific_rec_client_user_table(user_name):
-    result = my_cursor.execute(f'select encrypted_password from client_user where user_name like "{user_name}"').fetchone()
+    result = my_cursor.execute(f'select encrypted_password from client_user where user_name = "{user_name}"').fetchall()
     db.commit()
-    return str(list(result)[0])
+    return str(result[0])
 
 
 def insert_rec_to_client_password_key_table(user_name, password_key):
@@ -47,9 +47,9 @@ def delete_rec_from_client_password_key_table(user_name_to_delete):
 
 
 def show_key_of_specific_rec_client_password_key_table(user_name):
-    result = my_cursor.execute(f'select password_key from client_password_key where user_name like "{user_name}"').fetchone()
+    result = my_cursor.execute(f'''select password_key from client_password_key where user_name = "{user_name}"''').fetchall()
     db.commit()
-    return str(list(result)[0])
+    return str(result[0])
 
 
 def insert_rec_to_client_socket_table(username, client_socket):  # online clients
@@ -64,8 +64,9 @@ def delete_rec_from_client_socket_table(client_socket_to_delete):
 
 
 def insert_rec_to_client_seeds_table(client_socket, public_key, modulo_pq, seed, setSeed_pad):  # online clients
-    my_cursor.execute('insert into client_seeds (client_socket, public_key, modulo_pq, seed, setSeed_pad) values (%s,%s,%s,%s,%s)',
-                      (client_socket, public_key, modulo_pq, seed, setSeed_pad))
+    my_cursor.execute(
+        'insert into client_seeds (client_socket, public_key, modulo_pq, seed, setSeed_pad) values (%s,%s,%s,%s,%s)',
+        (client_socket, public_key, modulo_pq, seed, setSeed_pad))
     db.commit()
 
 
@@ -82,13 +83,13 @@ def insert_data_from_db_to_clients_users(clients_users):
 
 
 def show_only_employers_from_client_user():
-    result_list = my_cursor.execute(f'select user_name, first_name, last_name, company_name from client_user where user_type like "employer"').fetchall()
+    result_list = my_cursor.execute(f'''select user_name, first_name, last_name, company_name from client_user where user_type = "employer"''').fetchall()
     db.commit()
     return result_list
 
 
 def show_only_candidates_from_client_user():
-    result_list = my_cursor.execute(f'select user_name, first_name, last_name, user_ID from client_user where user_type like "candidate"').fetchall()
+    result_list = my_cursor.execute(f'''select user_name, first_name, last_name, user_ID from client_user where user_type = "candidate"''').fetchall()
     db.commit()
     return result_list
 
@@ -102,12 +103,13 @@ if __name__ == '__main__':
     #table = """ALTER TABLE client_user ADD company_name VARCHAR(255) NOT NULL"""
 
     #my_cursor.execute(table)
-    #mycursor.execute("DROP TABLE client_user")
+    my_cursor.execute("DELETE FROM client_user_socket")
+    my_cursor.execute("DELETE FROM client_seeds")
 
     #insert_row_into_table("client_user", ("maorkr", "Maor", "Krasner", "asdashdihas", "candidate", "213225576", "clum"))
     #insert_row_into_table("client_user", ("maormanager", "Mark", "Kras", "asdasasdasdihas", "employer", "0", "WeHireCyber"))
-    insert_row_into_table("client_user",
-                          ("tomyan", "Tom", "Yanover", "djnhaasdhajs", "employer", "0", "Intel LTD"))
+    #insert_row_into_table("client_user",
+    #                     ("tomyan", "Tom", "Yanover", "djnhaasdhajs", "employer", "0", "Intel LTD"))
 
     #client_usrs = {}
 
