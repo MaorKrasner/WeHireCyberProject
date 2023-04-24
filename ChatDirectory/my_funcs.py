@@ -4,28 +4,27 @@ from decimal import *
 
 
 def receive_data_with_decode(sock):  # Receive the message
-    BUFF_SIZE = 4096  # 4 KiB
     data = b''
     while True:
-        part = sock.recv(BUFF_SIZE)
+        part = sock.recv(1024)
         data += part
-        if len(part) < BUFF_SIZE:
+        if len(part) < 1024:
             # either 0 or end of data
             break
     return data.decode()
 
 
 def receive_data(sock):  # Receive the message without decode()
-    BUFF_SIZE = 1024  # 4 KiB
     data = b''
     while True:
-        try:
-            part = sock.recv(BUFF_SIZE)
-        except:
-            return -999
+        #try:
+        #    part = sock.recv(BUFF_SIZE)
+        #except:
+        #    return -999
 
+        part = sock.recv(1024)  # problem here!!!
         data += part
-        if len(part) < BUFF_SIZE:
+        if len(part) < 1024:
             # either 0 or end of data
             break
     return data
@@ -81,3 +80,11 @@ def add_element_in_tuple(t, i, num):
     ll.append(num)
     t = tuple(ll)
     return t
+
+if __name__ == '__main__':
+    count = 0
+    for i in range(100, 1000):
+        if is_prime(i):
+            print(str(i) + "is prime")
+            count += 1
+    print(count)

@@ -136,6 +136,7 @@ def sending_frames_thread(room, client_s):
 
 
 def session_with_client(client_socket):  # start the session
+    global user_name
     ab = key_exchange(client_socket)
 
     current_room = {}
@@ -242,8 +243,9 @@ def session_with_client(client_socket):  # start the session
 
     # step 2 - server wait to recieve the username from the client
     # add the current client to dict
+
     clients[user_name] = client_socket
-    print(f'client {user_name} data: {client_seeds[client_socket]}')  # the public key, pq, seed and SetSeed obj
+    #print(f'client {user_name} data: {client_seeds[client_socket]}')  # the public key, pq, seed and SetSeed obj
 
     # step 3 - server send list of online clinets
     '''online_clients = ' '.join(clients.keys())
@@ -254,12 +256,15 @@ def session_with_client(client_socket):  # start the session
     # print(clients.values())
 
     flag_session = True
-    time.sleep(0.1)
+    time.sleep(0.5)
 
-    '''
+    print("SEED ------------------")
+    print(client_seeds[client_socket][3].start_seed)
+    print(client_seeds[client_socket][3].A)
+    print(client_seeds[client_socket][3].B)
+
     # enter room
-    client_socket.send(encrypt_msg("Which room would you like to join - work, talking, dating", client_seeds[client_socket][3]))
-    '''
+    client_socket.send(encrypt_msg("Which room would you like to join work talking dating", client_seeds[client_socket][3]))
 
     enc_room = my_funcs.receive_data(client_socket)
 
@@ -276,8 +281,8 @@ def session_with_client(client_socket):  # start the session
         current_room = clients_room_talking
         room = 'talking'
 
-    '''enc_msg_to_send = encrypt_msg(f'You are connecting to {room} room.', client_seeds[client_socket][3])
-    client_socket.send(enc_msg_to_send)'''
+    enc_msg_to_send = encrypt_msg(f'You are connecting to {room} room.', client_seeds[client_socket][3])
+    client_socket.send(enc_msg_to_send)
 
     # in LOOP!!!
     while flag_session:

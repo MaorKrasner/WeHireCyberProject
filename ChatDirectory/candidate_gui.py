@@ -1,10 +1,10 @@
 import time
 from tkinter import *
-#import client_chat
 #import info_gui
 from tkinter import filedialog
 
 from ChatDirectory import chat_info_gui
+from ChatDirectory.client_chat import *
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
@@ -21,7 +21,7 @@ class ChatApplication:
         self.user = user
         self.room = room
         self._setup_main_window()
-        #self.start_recive_thread()
+        self.start_receive_thread()
 
 
     def run(self):
@@ -31,9 +31,9 @@ class ChatApplication:
     def close(self):
         self.window.destroy()
 
+    def start_receive_thread(self):
+        start_receive(self.text_widget)
 
-    #def start_recive_thread(self):
-    #    client_chat.start_recice(self.text_widget)
 
     def _setup_main_window(self):
         self.window.title("Chat")
@@ -114,8 +114,7 @@ class ChatApplication:
                 else:
                     app = chat_info_gui.chat_application_info_page()
                     app.run()
-            #res = client_chat.session_func(msg, self.text_widget)
-            res = input("enter msg : ")
+            res = client_chat.session_func(msg, self.text_widget)
             if res == 'exit':
                 self.close()
                 exit()

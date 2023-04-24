@@ -1,6 +1,8 @@
 from tkinter import *
+
+import ChatDirectory.client_chat
 import candidate_gui
-import client_chat
+from ChatDirectory.client_chat import *
 
 
 BG_GRAY = "#ABB2B9"
@@ -40,21 +42,21 @@ class chat_application_select_room_page:
         dating_b.place(x=470 / 2 - 140 / 2, y=390, width=140, height=70)
 
     def work_b(self):
-        username = client_chat.select_room_func("work")
+        username = ChatDirectory.client_chat.select_room_func("work")
         self.close()
         app_login = candidate_gui.ChatApplication(username, "work")
         app_login.run()
 
 
     def talking_b(self):
-        username = client_chat.select_room_func("talking")
+        username = ChatDirectory.client_chat.select_room_func("talking")
         self.close()
         app_login = candidate_gui.ChatApplication(username, "talking")
         app_login.run()
 
 
     def dating_b(self):
-        username = client_chat.select_room_func("dating")
+        username = ChatDirectory.client_chat.select_room_func("dating")
         self.close()
         app_login = candidate_gui.ChatApplication(username, "dating")
         app_login.run()

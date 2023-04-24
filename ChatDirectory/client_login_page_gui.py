@@ -1,4 +1,5 @@
 from tkinter import *
+from ChatDirectory.client_chat import *
 #import client_chat
 #from client_gui import *
 #from client_create_account_gui import *
@@ -57,7 +58,6 @@ class chat_application_login_page:
 
     def login(self):
         success = client_chat.login_func(self.e_user_name.get(), self.e_password.get())
-        success = True
         if success:
             self.close()
             app_choose_room = select_room_gui.chat_application_select_room_page()

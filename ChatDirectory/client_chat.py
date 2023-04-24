@@ -17,12 +17,14 @@ import struct
 import cv2
 import sys
 
-
 data_list = []  # index0 = pq, index1 = public key, index2 = private key
 data_list_for_private = []  # index0 = pq, index1 = public key, index2 = private key, index3 = pad**OR**index0 = pq, index1 = public key, index2 = pad
 private_flag = False
-primes = [i for i in range(4000, 8999) if my_funcs.is_prime(i)]
+# primes = [i for i in range(4000, 8999) if my_funcs.is_prime(i)]
+primes = [i for i in range(100, 999) if my_funcs.is_prime(i)]
+
 user_pad = SetSeed(0, 0, 0)  # !!!!!
+
 s = 0  # server socket
 user_name = None
 seed_server = 0
@@ -518,8 +520,9 @@ def start_func(login_or_create):
     seed_a_b = key_exchange(s, random.choice(primes), random.choice(primes),
                         random.randint(10, 100))
     seed_server = seed_a_b[0]
+
+    #globals()['user_pad'] = SetSeed(seed_a_b[0], seed_a_b[1], seed_a_b[2])  # obj that will help to generate pads for the server
     user_pad = SetSeed(seed_a_b[0], seed_a_b[1], seed_a_b[2])  # obj that will help to generate pads for the server
-    user_pad = user_pad
 
     print("MY USER PAD : ")
     print(user_pad.start_seed)
@@ -575,14 +578,17 @@ def create_account_func(params_list):
 
 
 def select_room_func(room):
-    '''
+    print("MY USER PAD : ")
+    print(user_pad.start_seed)
+    print(user_pad.A)
+    print(user_pad.B)
     enc_which_room = my_funcs.receive_data(s)
+    #print(enc_which_room)
     which_room = decrypt_cipher(enc_which_room, user_pad)
     print(which_room)
     print('press 1 to exit')
 
     print("You are connected to the server")
-    '''
 
     enc_msg_to_send = encrypt_msg(room, user_pad)
     s.send(enc_msg_to_send)
@@ -590,7 +596,7 @@ def select_room_func(room):
     return user_name
 
 
-def start_recice(textbox):
+def start_receive(textbox):
     # step 5 - start reviving msg from server in different thread!!
     t1 = threading.Thread(target=recive_ongoing_msg_from_chat_server_func_gui, args=(s, user_pad, textbox))
     t1.start()
