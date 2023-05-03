@@ -4,7 +4,7 @@ from ChatDirectory.client_chat import *
 from ChatDirectory.employer_create_account_page_gui import chat_application_create_account_employer_page
 from client_login_page_gui import *
 from candidate_create_account_page_gui import *
-from candidate_gui import *
+from chat_gui import *
 
 from ChatDirectory import client_login_page_gui
 

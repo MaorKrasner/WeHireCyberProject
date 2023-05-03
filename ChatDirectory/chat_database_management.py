@@ -18,8 +18,8 @@ def insert_rec_to_client_user_table(user_name, first_name, last_name, encrypted_
 
 
 def delete_rec_from_client_user_table(user_name_to_delete):
-    my_cursor.execute(f'''delete from client_user 
-                         where user_name = "{user_name_to_delete}"''')
+    command = f'''DELETE FROM client_user WHERE user_name = "{user_name_to_delete}"'''
+    my_cursor.execute(command)
     db.commit()
 
 
@@ -41,8 +41,8 @@ def insert_rec_to_client_password_key_table(user_name, password_key):
 
 
 def delete_rec_from_client_password_key_table(user_name_to_delete):
-    my_cursor.execute(f'''delete from client_password_key 
-                         where user_name = "{user_name_to_delete}"''')
+    command = f'''DELETE FROM client_password_key WHERE user_name = "{user_name_to_delete}"'''
+    my_cursor.execute(command)
     db.commit()
 
 
@@ -58,8 +58,8 @@ def insert_rec_to_client_socket_table(username, client_socket):  # online client
 
 
 def delete_rec_from_client_socket_table(client_socket_to_delete):
-    my_cursor.execute(f'''delete from client 
-                         where client_socket = "{client_socket_to_delete}"''')
+    command = f'''DELETE FROM client_user_socket WHERE client_socket = "{client_socket_to_delete}"'''
+    my_cursor.execute(command)
     db.commit()
 
 
@@ -71,8 +71,8 @@ def insert_rec_to_client_seeds_table(client_socket, public_key, modulo_pq, seed,
 
 
 def delete_rec_from_client_seeds_table(client_socket_to_delete):
-    my_cursor.execute(f'''delete from client_seeds 
-                         where client_socket = "{client_socket_to_delete}"''')
+    command = f'''DELETE FROM client_seeds WHERE client_socket = "{client_socket_to_delete}"'''
+    my_cursor.execute(command)
     db.commit()
 
 

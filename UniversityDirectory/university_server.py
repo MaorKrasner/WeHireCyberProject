@@ -27,7 +27,7 @@ def session_with_client(sock):
         id_of_candidate = sock.recv(1024).decode()
         sock.send(("Server Received id : " + id_of_candidate).encode())
         binary_file_to_check_content = receive_data(sock)
-        status = verify_if_the_certificate_is_real(id_of_candidate, binary_file_to_check_content)
+        status = verify_integrity_of_certificate(id_of_candidate, binary_file_to_check_content)
         if status:
             sock.send("The student's diploma is real".encode())
         else:

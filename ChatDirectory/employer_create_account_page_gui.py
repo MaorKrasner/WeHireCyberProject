@@ -26,7 +26,7 @@ class chat_application_create_account_employer_page:
         self.window.destroy()
 
     def _setup_main_window(self):
-        self.window.title("We Hire - create account page")
+        self.window.title("We Hire - create employer account page")
         self.window.resizable(width=False, height=False)
         self.window.configure(width=470, height=550, bg=BG_COLOR)  #470
 
@@ -60,7 +60,7 @@ class chat_application_create_account_employer_page:
         self.e_company_name.place(x=180, y=376)
 
         login_b = Button(self.window, text='Submit', font="Helvetica 35 bold", command=lambda: self.create_account())
-        login_b.place(x=235, y=450, width=200, height=70)
+        login_b.place(x=140, y=450, width=200, height=70)
 
     def create_account(self):
         must_params_list = [self.e_first_name.get(), self.e_last_name.get(), self.e_user_name.get(), self.e_password.get(), 'employer', '555', self.e_company_name.get()]

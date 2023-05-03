@@ -50,15 +50,6 @@ def convert_from_text_to_pdf_pypdf4(text_file_path, pdf_file_path):
         pdf_writer.write(out_file)
 
 def extract_text_from_pdf(pdf_path):
-    """
-    Extracts text from a PDF file using PyPDF4.
-
-    Args:
-        pdf_path (str): The path to the PDF file.
-
-    Returns:
-        str: The extracted text.
-    """
     try:
         with open(pdf_path, 'rb') as f:
             pdf_reader = PyPDF4.PdfFileReader(f)

@@ -4,11 +4,11 @@ from ChatDirectory.client_chat import *
 #from client_gui import *
 #from client_create_account_gui import *
 #from client_select_room_gui import *
+from chat_gui import *
 
 # from chat import get_response, bot_name
 #from ChatDirectory.candidate_select_room import chat_application_select_room_page
-import select_room_gui
-from ChatDirectory import client_chat
+from ChatDirectory import client_chat, chat_gui
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
@@ -59,9 +59,10 @@ class chat_application_login_page:
     def login(self):
         success = client_chat.login_func(self.e_user_name.get(), self.e_password.get())
         if success:
+            username = self.e_user_name.get()
             self.close()
-            app_choose_room = select_room_gui.chat_application_select_room_page()
-            app_choose_room.run()
+            chat_app = chat_gui.ChatApplication(username)
+            chat_app.run()
         else:
             self.e_user_name.delete(0, END)
             self.e_password.delete(0, END)

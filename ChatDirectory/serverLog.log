@@ -1,0 +1,18 @@
+2023-05-03 22:53:33,942 INFO     connection from ('127.0.0.1', 51866) has been established
+2023-05-03 22:53:33,943 INFO     public key    125
+2023-05-03 22:53:33,943 INFO     pq    280739
+2023-05-03 22:53:33,943 INFO     real seed    341
+2023-05-03 22:53:33,943 INFO     enc seed    36764
+2023-05-03 22:53:33,943 INFO     _________________next_client_________________
+2023-05-03 22:53:43,950 INFO     connection from ('127.0.0.1', 51867) has been established
+2023-05-03 22:53:43,951 INFO     public key    4643
+2023-05-03 22:53:43,951 INFO     pq    51641
+2023-05-03 22:53:43,951 INFO     real seed    2366
+2023-05-03 22:53:43,951 INFO     enc seed    45362
+2023-05-03 22:53:43,951 INFO     _________________next_client_________________
+2023-05-03 22:53:54,801 INFO     connection from ('127.0.0.1', 51868) has been established
+2023-05-03 22:53:54,801 INFO     public key    587
+2023-05-03 22:53:54,802 INFO     pq    458671
+2023-05-03 22:53:54,802 INFO     real seed    1960
+2023-05-03 22:53:54,802 INFO     enc seed    68286
+2023-05-03 22:53:54,802 INFO     _________________next_client_________________

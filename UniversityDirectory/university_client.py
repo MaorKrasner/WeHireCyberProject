@@ -19,7 +19,7 @@ if __name__ == '__main__':
         client_socket.connect(("127.0.0.1", 2358))
     except socket.error as e:
         print(str(e))
-    print("Connected to server םכ ומןהקרדןאט")
+    print("Connected to server")
 
     status_of_person = input("Enter e if you are an employer, Enter c if you are candidate : ")
     while status_of_person != "c" and status_of_person != "e":

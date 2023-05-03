@@ -76,10 +76,6 @@ def create_diploma_and_sign_it(id_of_student, signing_verifying_key):
 
         return True, pdf_file_content
 
-        #text_of_pdf = fileconvertor.convert_from_pdf_to_text(path_to_check_if_diploma_already_exists)
-        #text_of_pdf = ''.join(text_of_pdf.replace("(cid:10)", ""))
-        #return True, text_of_pdf.encode()
-
     find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
                                     FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
                                     ON subjects.Subject_ID = grades.Subject_ID 
@@ -185,7 +181,7 @@ def create_dip_and_sign_it(id_of_student, signing_verifying_key):
         message_to_sign = pdf_file_to_sign.read()
     pdf_file_to_sign.close()
 
-    pdf_file_sign_digest = hmacfunctions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
+    pdf_file_sign_digest = my_hmac_functions.hmac_sign_with_sha256(signing_verifying_key.encode(), message_to_sign)
 
     print("file digest/tag = " + str(pdf_file_sign_digest.hex()))
 
@@ -206,12 +202,11 @@ def create_dip_and_sign_it(id_of_student, signing_verifying_key):
     '''
 
 
-def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed):
+def verify_integrity_of_certificate(id_of_student, message_that_student_passed):
     if not find_student_in_students_table(id_of_student):
         return False
 
-    info_about_student = "SELECT Signed_file_digest, Signing_key from certificates WHERE Student_ID = " + str(
-        id_of_student) + ";"
+    info_about_student = "SELECT Signed_file_digest, Signing_key from certificates WHERE Student_ID = " + str(id_of_student) + ";"
     info_query_result = cursor.execute(info_about_student).fetchone()
 
     original_file_digest = str(info_query_result[0])
@@ -220,7 +215,7 @@ def verify_if_the_certificate_is_real(id_of_student, message_that_student_passed
     signing_key = str(info_query_result[1]).encode()
     print(str(info_query_result[1]))
 
-    digest_of_file_student_passed = hmacfunctions.hmac_sign_with_sha256(signing_key, message_that_student_passed)
+    digest_of_file_student_passed = my_hmac_functions.hmac_sign_with_sha256(signing_key, message_that_student_passed)
 
     return original_file_digest == str(digest_of_file_student_passed.hex())
 

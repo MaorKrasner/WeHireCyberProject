@@ -8,7 +8,7 @@ from ChatDirectory.otp_funcs import *
 from client_start_gui import *
 #from client_login_gui import *
 #from client_create_account_gui import *
-from candidate_gui import *
+from chat_gui import *
 import hashlib
 import hmac
 import pickle
@@ -140,191 +140,28 @@ def send_to_server_public_key_and_pq(server_socket, public_key, pq):
     server_socket.send(f'{public_key} {pq}'.encode())
 
 
-def recive_ongoing_msg_from_chat_server(s, pad):
-    global private_flag
-    while True:
-        if not private_flag:
-            enc_msg_from_server = my_funcs.receive_data(s)
-            msg_from_server = decrypt_cipher(enc_msg_from_server, pad)
-
-            if msg_from_server == "kill yourself":
-                s.close()
-                break
-
-            if msg_from_server == "creator_rsa":
-                key_exchange_for_private(s, random.choice(primes), random.choice(primes),
-                                         random.randint(10, 100))  # ***
-                private_flag = True
-
-            if msg_from_server == 'second_participant':
-                public_key = int(my_funcs.receive_data_with_decode(s))
-                qp = int(my_funcs.receive_data_with_decode(s))
-                data_list_for_private.append(qp)
-                data_list_for_private.append(public_key)
-                seed = random.randint(0, 500)
-                print(f'seed_for_private2    {seed}')
-                data_list_for_private.append(SetSeed(seed, 8888, 9999))
-                enc_seed = my_funcs.rsa_encryption_decryption(qp, public_key, seed)
-                print(f'enc seed_for_private2    {enc_seed}')
-                s.send(str(enc_seed).encode())
-                private_flag = True
-
-            print(msg_from_server)
-        else:
-            enc_private_msg_from_server = my_funcs.receive_data(s)
-            if enc_private_msg_from_server == '1'.encode():
-                s.send('stam'.encode())
-                private_flag = False
-                data_list_for_private.clear()
-                print('exit from private session')
-            else:
-                if private_flag:
-                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1])
-                    print(private_msg_from_server)
-
-
 def encrypt_msg(msg, pad):
     msg_bin = text_to_byte(msg)
     pad_bin = pad.my_key_stream_create_pad(len(msg_bin))  # create a pad
-    # print(f'encryption pad for {msg}:\n{bytes(pad_bin, "ascii")}')
-
     enc_msg_to_send = encrypt(bytes(msg_bin, 'ascii'), bytes(pad_bin, 'ascii'))
-    # print(f'enc msg: {enc_msg_to_send}')
-
-    # dec_msg = decrypt(enc_msg_to_send, bytes(pad_bin, 'ascii'))
-    # print(f'************: {byte_to_text(dec_user_name)}')
     return enc_msg_to_send
 
 def encrypt_file(block, pad):
     pad_bin = pad.my_key_stream_create_pad(len(block))  # create a pad
-    # print(f'encryption pad for {msg}:\n{bytes(pad_bin, "ascii")}')
-
     enc_msg_to_send = encrypt(block, pad_bin.encode())
-    # print(f'enc msg: {enc_msg_to_send}')
-
-    # dec_msg = decrypt(enc_msg_to_send, bytes(pad_bin, 'ascii'))
-    # print(f'************: {byte_to_text(dec_user_name)}')
     return enc_msg_to_send
 
 
 def decrypt_cipher(cipher, pad):
-    # print(f'enc res: {cipher}')
     pad_bin = pad.my_key_stream_create_pad(len(cipher))
-    # print(f'decryption pad for {cipher}:\n{bytes(pad_bin, "ascii")}')
-
     cipher_dec = decrypt(cipher, bytes(pad_bin, 'ascii'))
     msg_from_server = byte_to_text(cipher_dec)
-    # print(f'decrypt msg: {msg_from_server}')
     return msg_from_server
 
 def decrypt_cipher_file(cipher, pad):
-    # print(f'enc res: {cipher}')
     pad_bin = pad.my_key_stream_create_pad(len(cipher))
-    # print(f'decryption pad for {cipher}:\n{bytes(pad_bin, "ascii")}')
-
     cipher_dec = decrypt(cipher, pad_bin.encode())
-    # print(f'decrypt msg: {msg_from_server}')
     return cipher_dec
-
-
-def start():
-    global private_flag
-    global data_list_for_private
-    # step 1- client connect to server
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('127.0.0.1', 1235))
-    print(s.getsockname())
-    # key exchange
-    seed = key_exchange(s, random.choice(primes), random.choice(primes),
-                        random.randint(10, 100))
-
-    pad = SetSeed(seed)
-
-    # step 2- client recieve questions from server
-    enc_login_or_not = my_funcs.receive_data(s)
-    login_or_not = decrypt_cipher(enc_login_or_not, pad)
-    client_ans = input(login_or_not)
-    s.send(encrypt_msg(client_ans, pad))
-
-    success = False
-    while not success and client_ans == '2':
-        create_account = decrypt_cipher(my_funcs.receive_data(s), pad)
-        print(create_account)
-
-        first_name = input('first name: ')
-        s.send(encrypt_msg(first_name, pad))
-        if first_name == '0':
-            break
-        last_name = input('last name: ')
-        s.send(encrypt_msg(last_name, pad))
-        if last_name == '0':
-            break
-        user_name = input('user name: ')
-        s.send(encrypt_msg(user_name, pad))
-        if user_name == '0':
-            break
-        password = input('password: ')
-        s.send(encrypt_msg(password, pad))
-        if password == '0':
-            break
-
-        server_ans = decrypt_cipher(my_funcs.receive_data(s), pad)
-        print(server_ans)
-        if server_ans == 'details saved successfully':
-            success = True
-
-    success = False
-    while not success:
-        enc_enter_name = my_funcs.receive_data(s)
-        print(decrypt_cipher(enc_enter_name, pad))
-        username = input('user name: ')
-        password = input('password: ')
-
-        # step 3 - send to server the username
-        s.send(encrypt_msg(username, pad))
-        s.send(encrypt_msg(password, pad))
-
-        try_to_login = decrypt_cipher(my_funcs.receive_data(s), pad)
-        print(try_to_login)
-        if try_to_login == 'success to connect':
-            success = True
-            print(decrypt_cipher(my_funcs.receive_data(s), pad))  # hello
-
-    # step 4 - recive from server the online client in the chat
-    enc_online_clients = my_funcs.receive_data(s)
-    online_clients = decrypt_cipher(enc_online_clients, pad)
-    print(online_clients)
-    print('press 1 to exit')
-
-    # step 5 - start reviving msg from server in different thread!!
-    t1 = threading.Thread(target=recive_ongoing_msg_from_chat_server, args=(s, pad,))
-    t1.start()
-
-    print("You are connected to the server")
-    # in LOOP forever!!!
-    while True:
-        # step 6- client send some msg to server (get the msg as input from the user)
-        user_msg = input()
-        if private_flag:
-            if user_msg == '1':
-                print('exit from private session')
-                private_flag = False
-                s.send(user_msg.encode())
-                data_list_for_private.clear()
-            else:
-                enc_private_msg_to_send = encrypt_msg(user_msg, data_list_for_private[-1])
-                s.send(enc_private_msg_to_send)
-        else:
-            if user_msg == '1' or user_msg == '***delete_account***':
-                enc_msg_to_send = encrypt_msg(user_msg, pad)
-                s.send(enc_msg_to_send)
-                break
-
-            enc_msg_to_send = encrypt_msg(user_msg, pad)
-
-            s.send(enc_msg_to_send)
-
-    print('client program exit!!')
 
 def my_webcam():
     vid = cv2.VideoCapture(0)
@@ -384,19 +221,17 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 enc_file_name_from_server = my_funcs.receive_data(s)
                 file_name_from_server = decrypt_cipher(enc_file_name_from_server, pad)
                 f = open(f'{user_name}_from_{file_name_from_server}', "wb")
+
                 enc_block_file = my_funcs.receive_data(s)
                 block_file = decrypt_cipher_file(enc_block_file, pad)
                 digest_maker = hmac.new(str(seed_server).encode(), ''.encode(), hashlib.sha256)
+
                 while block_file != b'0':
                     f.write(block_file)
-                    # print(block_file)
-                    # print(block_file.encode())
                     digest_maker.update(block_file)
-
                     enc_block_file = my_funcs.receive_data(s)
                     block_file = decrypt_cipher_file(enc_block_file, pad)
-                    # print(block_file)
-                    # print(block_file.encode())
+
                 f.close()
 
                 rec_digest = digest_maker.hexdigest()
@@ -430,7 +265,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 while True:
                     while len(data) < payload_size:
                         packet = my_funcs.receive_data(s)
-                        #msg = decrypt_cipher_file(packet, user_pad)
+                        msg = decrypt_cipher_file(packet, user_pad)
                         if not packet:
                             break
                         data += packet
@@ -440,7 +275,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
 
                     while len(data) < msg_size:
                         data += my_funcs.receive_data(s)
-                        #msg = decrypt_cipher_file(data, user_pad)
+                        msg = decrypt_cipher_file(data, user_pad)
                     frame_data = data[:msg_size]
                     data = data[msg_size:]
                     frame = pickle.loads(frame_data)
@@ -493,7 +328,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 text_box.see(END)
             else:
                 if private_flag:
-                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1])
+                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1]) # list index out of range
 
                     print(private_msg_from_server)
 
@@ -512,7 +347,7 @@ def start_func(login_or_create):
     global s
     global seed_server
 
-    # step 1- client connect to server
+    # create a socket for the client and connect to server
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect(('127.0.0.1', 23850))                        #**************************************
     print(s.getsockname())
@@ -521,7 +356,6 @@ def start_func(login_or_create):
                         random.randint(10, 100))
     seed_server = seed_a_b[0]
 
-    #globals()['user_pad'] = SetSeed(seed_a_b[0], seed_a_b[1], seed_a_b[2])  # obj that will help to generate pads for the server
     user_pad = SetSeed(seed_a_b[0], seed_a_b[1], seed_a_b[2])  # obj that will help to generate pads for the server
 
     print("MY USER PAD : ")
@@ -532,7 +366,7 @@ def start_func(login_or_create):
     enc_login_or_not = my_funcs.receive_data(s)
     login_or_not = decrypt_cipher(enc_login_or_not, user_pad)
     print(login_or_not)
-    client_ans = login_or_create      # what the user click on
+    client_ans = login_or_create   # what the user click on
     s.send(encrypt_msg(client_ans, user_pad))
 
     create_account = decrypt_cipher(my_funcs.receive_data(s), user_pad)
@@ -575,25 +409,6 @@ def create_account_func(params_list):
         return '1'
     else:
         return '2'
-
-
-def select_room_func(room):
-    print("MY USER PAD : ")
-    print(user_pad.start_seed)
-    print(user_pad.A)
-    print(user_pad.B)
-    enc_which_room = my_funcs.receive_data(s)
-    #print(enc_which_room)
-    which_room = decrypt_cipher(enc_which_room, user_pad)
-    print(which_room)
-    print('press 1 to exit')
-
-    print("You are connected to the server")
-
-    enc_msg_to_send = encrypt_msg(room, user_pad)
-    s.send(enc_msg_to_send)
-
-    return user_name
 
 
 def start_receive(textbox):
@@ -664,7 +479,7 @@ def session_func(user_msg, textbox):
                         enc_block_to_send = encrypt_file(block, user_pad)
                         print('**')
                         print(enc_block_to_send)
-                        if hack_flag:     # פורץ משבש את תוכן הקובץ
+                        if hack_flag:     # somebody changed the file
                             s.send(len(enc_block_to_send) * b'0')
                         else:
                             s.send(enc_block_to_send)
@@ -697,7 +512,7 @@ def session_func(user_msg, textbox):
         if user_msg == 'FILE':
             hmac_flag_photo = True
 
-        if user_msg == 'HACK':     # disrupt the information
+        if user_msg == 'HACK':     # information is interrupted
             hack_flag = True
             return
 
@@ -709,19 +524,19 @@ def session_func(user_msg, textbox):
             time.sleep(0.01)
             vid = cv2.VideoCapture(0)
             while vid.isOpened():
-                c += 1
+                #c += 1
                 img, frame = vid.read()
                 frame = imutils.resize(frame, width=320)
                 a = pickle.dumps(frame)
                 message = struct.pack("Q", len(a)) + a
-                # enc_msg = encrypt_file(message, user_pad)
-                s.send(message)
+                enc_msg = encrypt_file(message, user_pad)
+                s.send(enc_msg)
                 cv2.imshow('MY VIDEO', frame)
-                key = cv2.waitKey(1) & 0xFF
-                print(c)
-                if c < 600:
-                    cv2.destroyAllWindows()
-                    break
+                #key = cv2.waitKey(1) & 0xFF
+                #print(c)
+                #if c < 600:
+                #    cv2.destroyAllWindows()
+                #    break
             return
         enc_msg_to_send = encrypt_msg(user_msg, user_pad)
         # print(enc_msg_to_send)

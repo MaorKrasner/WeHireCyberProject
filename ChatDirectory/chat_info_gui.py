@@ -41,32 +41,44 @@ class chat_application_info_page:
 
         room_online1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                              text='!room online:', font="Helvetica 15 bold").place(
-            x=10, y=85)
+            x=10, y=90)
         room_online2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                              text='Displays all users connected to your room.', font="Helvetica 15").place(
-            x=140, y=85)
+            x=140, y=90)
 
         profile1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                         text='!profile:',
-                        font="Helvetica 15 bold").place(x=10, y=145)
+                        font="Helvetica 15 bold").place(x=10, y=125)
         profile2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                          text='And then to who(username), displays the data of this user.',
-                         font="Helvetica 15").place(x=90, y=145)
+                         font="Helvetica 15").place(x=90, y=125)
 
         private1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='!private:', font="Helvetica 15 bold").place(x=10, y=205)
+                         text='!private:', font="Helvetica 15 bold").place(x=10, y=160)
         private2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                         text='And then to who(username), will start a private session with this user.', font="Helvetica 15").place(x=95, y=205)
+                         text='And then to who(username), will start a private session with this user.', font="Helvetica 15").place(x=95, y=160)
 
         sign1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='!SIGN:', font="Helvetica 15 bold").place(x=10, y=265)
+                      text='!SIGN:', font="Helvetica 15 bold").place(x=10, y=195)
         sign2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='create diploma and sign it (for candidate only!)', font="Helvetica 15 bold").place(x=80, y=265)
+                      text='create diploma and sign it (for candidate only!)', font="Helvetica 15 bold").place(x=80, y=195)
 
         verify1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='!VERIFY:', font="Helvetica 15 bold").place(x=10, y=295)
+                      text='!VERIFY:', font="Helvetica 15 bold").place(x=10, y=230)
         verify2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='check if diploma is real (for employer only!)', font="Helvetica 15 bold").place(x=100, y=295)
+                      text='check if diploma is real (for employer only!)', font="Helvetica 15 bold").place(x=100, y=230)
+
+        emp1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                        text='!employers:', font="Helvetica 15 bold").place(x=10, y=265)
+        emp2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                        text='show all the usernames of all online employers', font="Helvetica 15 bold").place(x=130,
+                                                                                                              y=265)
+
+        can1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                        text='!candidates:', font="Helvetica 15 bold").place(x=10, y=300)
+        can2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                        text='show all the usernames of all online candidates', font="Helvetica 15 bold").place(x=135,
+                                                                                                              y=300)
 
         login_b = Button(self.window, text='Close', font="Helvetica 35 bold", command=lambda: self.close())
         login_b.place(x=250, y=430, width=200, height=70)

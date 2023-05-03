@@ -14,7 +14,7 @@ def hmac_sign_with_sha256(key, message):
     if len(key) < block_size:
         key = key + b'\x00' * (block_size - len(key))
 
-    # XOR the key with the inner and outer padding
+    # xor the key with the inner and outer padding
     inner_padding = b'\x36' * block_size
     outer_padding = b'\x5c' * block_size
     inner_key = bytes([a ^ b for a, b in zip(key, inner_padding)])
@@ -23,7 +23,7 @@ def hmac_sign_with_sha256(key, message):
     # Calculate the inner hash
     inner_hash = Sha256(inner_key + message).digest()
 
-    # Calculate the outer hash
+    # Calculate the outer hash with the inner hash
     outer_hash = Sha256(outer_key + inner_hash).digest()
 
     return outer_hash

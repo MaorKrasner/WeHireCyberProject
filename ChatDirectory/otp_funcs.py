@@ -14,8 +14,8 @@ class SetSeed:
 
     def my_random_pad_generator(self, a, b, len_key, final_key):
         while len_key != 0:
-            print ("a : " + str(a))
-            print("start seed : " + str(self.start_seed))
+            #print ("a : " + str(a))
+            #print("start seed : " + str(self.start_seed))
             a_s = int((str(a) + str(self.start_seed))+(str(a) + str(self.start_seed))[4])  # string index out of range
             print(a_s)
             self.start_seed = (a_s + b) % (2 ** 32)
@@ -27,16 +27,16 @@ class SetSeed:
         return final_key
 
     def my_key_stream_create_pad(self, key_len):
-        #pad = ''.join(self.my_random_pad_generator(self.A, self.B, key_len, []))
+        pad = ''.join(self.my_random_pad_generator(self.A, self.B, key_len, []))
         # print(f'pad: {pad}')
-        pad = ''.join(self.my_random_LCD(self.A, self.B, key_len, []))
+        #pad = ''.join(self.my_random_LCD(self.A, self.B, key_len, []))
         return pad
 
 
     def my_random_LCD(self, a, b, len_key, final_key):
             if len_key == 0:
                 return final_key
-            a_s = int(str(a) + str(self.start_seed))
+            a_s = int(str(a) + str(self.start_seed))  # RecursionError: maximum recursion depth exceeded while getting the str of an object
             self.start_seed = (a_s + b) % (2 ** 32)
             if (self.start_seed % 2) == 0:
                 final_key.append(format(1, 'b'))

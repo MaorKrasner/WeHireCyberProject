@@ -3,6 +3,7 @@ from tkinter import *
 #import info_gui
 from tkinter import filedialog
 
+import ChatDirectory.client_chat
 from ChatDirectory import chat_info_gui
 from ChatDirectory.client_chat import *
 
@@ -16,10 +17,10 @@ FONT_BOLD = "Helvetica 13 bold"
 
 class ChatApplication:
 
-    def __init__(self, user, room):
+    def __init__(self, user):
         self.window = Tk()
         self.user = user
-        self.room = room
+        #self.room = room
         self._setup_main_window()
         self.start_receive_thread()
 
@@ -32,11 +33,11 @@ class ChatApplication:
         self.window.destroy()
 
     def start_receive_thread(self):
-        start_receive(self.text_widget)
+        ChatDirectory.client_chat.start_receive(self.text_widget)
 
 
     def _setup_main_window(self):
-        self.window.title("Chat")
+        self.window.title("We Hire - Chat")
         self.window.resizable(width=False, height=False)
         self.window.configure(width=720, height=550, bg=BG_COLOR)
 
@@ -45,11 +46,6 @@ class ChatApplication:
                            text=f'Welcome {self.user}', font=FONT_BOLD, pady=10)
 
         head_label.place(width=465, height=50)
-
-
-        room_label = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                           text=f'Room: {self.room}', font=FONT_BOLD, pady=10)
-        room_label.place(width=120, height=120)
 
         # tiny divider
         line1 = Label(self.window, width=450, bg=BG_GRAY)
@@ -114,7 +110,7 @@ class ChatApplication:
                 else:
                     app = chat_info_gui.chat_application_info_page()
                     app.run()
-            res = client_chat.session_func(msg, self.text_widget)
+            res = ChatDirectory.client_chat.session_func(msg, self.text_widget)
             if res == 'exit':
                 self.close()
                 exit()
@@ -137,13 +133,13 @@ class ChatApplication:
     def browseFiles(self):
         filename = filedialog.askopenfilename(initialdir="/",
                                               title="Select a File",
-                                              filetypes=(("Pdf files",
-                                                          "*.pdf*"),
+                                              filetypes=(("Text files",
+                                                          "*.txt*"),
                                                          ("all files",
                                                           "*.*")))
         self.insert_message('FILE')
         self.insert_message(filename)
 
 if __name__ == "__main__":
-    app = ChatApplication('amit', 'work')
+    app = ChatApplication('maorkr')
     app.run()
