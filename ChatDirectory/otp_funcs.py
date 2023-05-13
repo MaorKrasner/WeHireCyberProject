@@ -17,7 +17,7 @@ class SetSeed:
             #print ("a : " + str(a))
             #print("start seed : " + str(self.start_seed))
             a_s = int((str(a) + str(self.start_seed))+(str(a) + str(self.start_seed))[4])  # string index out of range
-            print(a_s)
+            #print(a_s)
             self.start_seed = (a_s + b) % (2 ** 32)
             if (self.start_seed % 2) == 0:
                 final_key.append(format(1, 'b'))

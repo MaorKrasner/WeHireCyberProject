@@ -1,7 +1,4 @@
 from tkinter import *
-#import client_chat
-#import client_login_gui
-#from client_gui import *
 
 BG_GRAY = "#ABB2B9"
 BG_COLOR = "#17202A"
@@ -79,6 +76,10 @@ class chat_application_info_page:
         can2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                         text='show all the usernames of all online candidates', font="Helvetica 15 bold").place(x=135,
                                                                                                               y=300)
+        del1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                     text='***delete_account***:', font="Helvetica 15 bold").place(x=10, y=335)
+        del2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
+                     text='delete your account', font="Helvetica 15 bold").place(x=215, y=335)
 
         login_b = Button(self.window, text='Close', font="Helvetica 35 bold", command=lambda: self.close())
         login_b.place(x=250, y=430, width=200, height=70)

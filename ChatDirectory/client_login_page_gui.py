@@ -1,13 +1,6 @@
 from tkinter import *
 from ChatDirectory.client_chat import *
-#import client_chat
-#from client_gui import *
-#from client_create_account_gui import *
-#from client_select_room_gui import *
 from chat_gui import *
-
-# from chat import get_response, bot_name
-#from ChatDirectory.candidate_select_room import chat_application_select_room_page
 from ChatDirectory import client_chat, chat_gui
 
 BG_GRAY = "#ABB2B9"

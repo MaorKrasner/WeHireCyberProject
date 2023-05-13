@@ -20,10 +20,6 @@ logging.basicConfig(
 
 client_seeds = {}  # the server save the public key, the pq, the seed and the SetSeed obj for each client socket
 clients = {}
-clients_room_1 = {}
-clients_room_2 = {}
-clients_room_3 = {}
-clients_list_of_rooms = [{}, {}, {}, {}, {}, {}, {}, {}, {}, {}]  # a list of available rooms
 clients_users = {}  # for each username the server save his first name, last name and his password
 client_password_key = {}  # for each username the server save his password_key for his password
 insert_data_from_db_to_clients_users(clients_users)
@@ -215,27 +211,6 @@ def session_with_client(client_socket):  # start the session
     print(client_seeds[client_socket][3].start_seed)
     print(client_seeds[client_socket][3].A)
     print(client_seeds[client_socket][3].B)
-
-    '''
-    room_flag = False
-    room_number = 0
-
-    while not room_flag:
-        # try to enter a specific room
-        client_socket.send(encrypt_msg("Which room would you like to join ?", client_seeds[client_socket][3]))
-        enc_room = my_funcs.receive_data(client_socket)
-        room = decrypt_cipher(enc_room, client_seeds[client_socket][3])
-        room_number = int(room.split(" ")[1])
-
-        if len(clients_list_of_rooms[room_number - 1]) < 2:
-            current_room = clients_list_of_rooms[room_number - 1]
-            clients_list_of_rooms[room_number - 1][user_name] = client_socket
-            client_socket.send(encrypt_msg(f'You are connected to {room}.', client_seeds[client_socket][3]))
-            room_flag = True
-
-        else:
-            client_socket.send(encrypt_msg(f'You have chosen a room full of clients, try again!', client_seeds[client_socket][3]))
-    '''
 
     # in LOOP!!!
     while flag_session:
@@ -431,7 +406,7 @@ def session_with_client(client_socket):  # start the session
                         client_socket.send(encrypt_msg(string_to_send, client_seeds[client_socket][3]))
 
                     elif msg_from_client == 'WEBCAM':  # the user wants to open his camera
-                        for others_clients in current_room.values():
+                        for others_clients in clients.values():
                             if others_clients is not client_socket:
                                 if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                     others_clients.send(encrypt_msg('start camera', client_seeds[others_clients][3]))
@@ -439,7 +414,7 @@ def session_with_client(client_socket):  # start the session
 
                         encrypted_video_frame = my_funcs.receive_data(client_socket)
                         while encrypted_video_frame:
-                            for others_clients in current_room.values():
+                            for others_clients in clients.values():
                                 if others_clients is not client_socket:
                                     if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                         others_clients.send(encrypted_video_frame)
@@ -485,7 +460,7 @@ def session_with_client(client_socket):  # start the session
 
                             if real_digest == body_file_hmac:    # check the integrity of the file body
                                 print(f'The FILE sent from {user_name} is original')
-                                for others_clients in current_room.values():
+                                for others_clients in clients.values():
                                     if others_clients is not client_socket:
                                         if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                             others_clients.send(encrypt_msg('get file photo', client_seeds[others_clients][3]))
@@ -494,7 +469,7 @@ def session_with_client(client_socket):  # start the session
                                 time.sleep(0.1)
 
                                 hmac_for_clients = {}
-                                for others_clients in current_room.values():
+                                for others_clients in clients.values():
                                     if others_clients is not client_socket:
                                         hmac_for_clients[others_clients] = hmac.new(str(client_seeds[others_clients][2]).encode(), ''.encode(), hashlib.sha256)
 
@@ -502,7 +477,7 @@ def session_with_client(client_socket):  # start the session
                                 block = f.read(1024)
 
                                 while block:   # sending each file block to all the client in the room
-                                    for others_clients in current_room.values():
+                                    for others_clients in clients.values():
                                         if others_clients is not client_socket:
                                             if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                                 hmac_for_clients[others_clients].update(block)
@@ -515,13 +490,13 @@ def session_with_client(client_socket):  # start the session
                                 #os.remove("server_temp_file.txt")  # remove the temp file
                                 os.remove(f"server_temp_file.{file_name.split('.')[-1]}")  # remove the temporary file we created
                                 time.sleep(0.5)
-                                for others_clients in current_room.values():
+                                for others_clients in clients.values():
                                     if others_clients is not client_socket:
                                         if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                             others_clients.send(encrypt_msg_file(b'0', client_seeds[others_clients][3]))
 
                                 time.sleep(0.1)
-                                for others_clients in current_room.values():
+                                for others_clients in clients.values():
                                     if others_clients is not client_socket:
                                         if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                             others_clients.send(encrypt_msg(hmac_for_clients[others_clients].hexdigest(), client_seeds[others_clients][3]))
@@ -535,7 +510,6 @@ def session_with_client(client_socket):  # start the session
 
                     else:  # send any other message to all the clients in the room
                         msg_from_client_to_others = msg_header + msg_from_client
-                        #for others_clients in current_room.values():
                         for other_clients in clients.values():
                             if other_clients is not client_socket:
                                 if other_clients not in [clients[c] for c in private_sessions.keys()] and other_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:

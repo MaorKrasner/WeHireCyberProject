@@ -1,8 +1,5 @@
 from tkinter import *
-
-# import client_chat
 import client_login_page_gui
-# from client_gui import *
 from ChatDirectory import client_chat
 
 BG_GRAY = "#ABB2B9"

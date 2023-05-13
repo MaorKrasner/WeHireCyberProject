@@ -1,6 +1,4 @@
-import time
 from tkinter import *
-#import info_gui
 from tkinter import filedialog
 
 import ChatDirectory.client_chat
@@ -20,7 +18,6 @@ class ChatApplication:
     def __init__(self, user):
         self.window = Tk()
         self.user = user
-        #self.room = room
         self._setup_main_window()
         self.start_receive_thread()
 

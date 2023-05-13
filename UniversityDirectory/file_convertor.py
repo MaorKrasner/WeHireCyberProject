@@ -1,5 +1,18 @@
 from io import StringIO
 
+import io
+from reportlab.pdfgen import canvas
+
+def create_pdf_and_write_to_it(text, pdf_path):
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer)
+    pdf.drawString(100, 750, text)
+    pdf.save()
+    pdf_content = buffer.getvalue()
+    with open(pdf_path, "wb") as f:
+        f.write(pdf_content)
+
+
 import PyPDF4
 import pdfquery
 import pdfplumber
@@ -108,9 +121,9 @@ def extract_from_pdf(pdf_file_path):
 
 
 if __name__ == '__main__':
-    #convert_from_text_to_pdf("C:\\Users\\Student\\Desktop\\maor123.txt", "C:\\Users\\Student\\Desktop\\pdfmaor123.pdf")
+    convert_from_text_to_pdf("C:\\Users\\Student\\Desktop\\maor123.txt", "C:\\Users\\Student\\Desktop\\pdfmaor123.pdf")
     #list_of_pages = extract_from_pdf(r"C:\Users\maork\OneDrive\Desktop\WeHireCyberProject\UniversityStudentsDiplomasFolder\Maor Krasner 213225576.pdf")
     #text = convert_from_pdf_to_text(r"C:\Users\maork\OneDrive\Desktop\WeHireCyberProject\UniversityStudentsDiplomasFolder\Maor Krasner 213225576.pdf")
     #print(text)
-    text = extract_from_pdf(r"C:\Users\maork\OneDrive\Desktop\WeHireCyberProject\UniversityStudentsDiplomasFolder\Maor Krasner 213225576.pdf")
-    print(text)
+    #text = extract_from_pdf(r"C:\Users\maork\OneDrive\Desktop\WeHireCyberProject\UniversityStudentsDiplomasFolder\Maor Krasner 213225576.pdf")
+    #print(text)

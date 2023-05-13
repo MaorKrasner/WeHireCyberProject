@@ -6,9 +6,9 @@ from decimal import *
 def receive_data_with_decode(sock):  # Receive the message
     data = b''
     while True:
-        part = sock.recv(1024)
+        part = sock.recv(4096)
         data += part
-        if len(part) < 1024:
+        if len(part) < 4096:
             # either 0 or end of data
             break
     return data.decode()
@@ -22,9 +22,9 @@ def receive_data(sock):  # Receive the message without decode()
         #except:
         #    return -999
 
-        part = sock.recv(1024)  # problem here!!!
+        part = sock.recv(4096)  # problem here!!!
         data += part
-        if len(part) < 1024:
+        if len(part) < 4096:
             # either 0 or end of data
             break
     return data
