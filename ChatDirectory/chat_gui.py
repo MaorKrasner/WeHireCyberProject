@@ -90,8 +90,11 @@ class ChatApplication:
 
     def on_enter_pressed(self, event):
         msg = self.msg_entry.get()
-        self.msg_entry.delete(0, END)
-        self.insert_message(msg)
+        if str(msg) != 'VERIFY':
+            self.msg_entry.delete(0, END)
+            self.insert_message(msg)
+        else:
+            self.browseFilesForVerify()
 
     def insert_message(self, msg):
         if not msg or [x for x in msg] == [' ' for x in range(len(msg))]:
@@ -135,6 +138,16 @@ class ChatApplication:
                                                          ("all files",
                                                           "*.*")))
         self.insert_message('FILE')
+        self.insert_message(filename)
+
+    def browseFilesForVerify(self):
+        filename = filedialog.askopenfilename(initialdir="/",
+                                              title="Select a File",
+                                              filetypes=(("Text files",
+                                                          "*.txt*"),
+                                                         ("all files",
+                                                          "*.*")))
+        self.insert_message('VERIFY')
         self.insert_message(filename)
 
 if __name__ == "__main__":

@@ -58,21 +58,24 @@ def key_exchange(server_socket, p, q, x):
 
 
     send_to_server_public_key_and_pq(server_socket, x, p * q)  # send first time
+    print("SERVER sent public and pq")
 
     enc_seed = int(my_funcs.receive_data_with_decode(server_socket))  # get from server the enc seed
     dec_seed = my_funcs.rsa_encryption_decryption(p * q, y, enc_seed)  # dec the enc seed
+    print("SERVER RECEIVED THE DECRYPTED SEED : ")
 
-    enc_a = server_socket.recv(32).decode()
-    enc_b = server_socket.recv(32).decode()
+    enc_a_b = server_socket.recv(1024).decode().split(':')
+    print("SERVER RECEIVED ENC A AND B")
 
-    enc_a = int(enc_a)
+    enc_a = int(enc_a_b[0])
     dec_a = my_funcs.rsa_encryption_decryption(p * q, y, enc_a)
+    print("SERVER ENC A : " + str(enc_a))
 
-    enc_b = int(enc_b)
+    enc_b = int(enc_a_b[1])
     dec_b = my_funcs.rsa_encryption_decryption(p * q, y, enc_b)
+    print("SERVER ENC B : " + str(enc_b))
 
     return [dec_seed, int(str(dec_a) + str(dec_b)), int(str(dec_b) + str(dec_a))]
-
 
 def create_random_key(n):
     chars = string.ascii_uppercase + string.ascii_lowercase + string.digits
@@ -80,11 +83,30 @@ def create_random_key(n):
 
 
 def candidate_func(c_socket, person_id):
-    c_socket.send(encrypt_msg("candidate", user_pad))
-    c_socket.send(encrypt_msg(person_id, user_pad))
+    #c_socket.send(encrypt_msg("candidate", user_pad))
+    #c_socket.send(encrypt_msg(person_id, user_pad))
+
+    #c_socket.send(f'candidate {person_id}'.encode())
+    #c_socket.send(''.join(person_id).encode())
+
+    c_socket.send(encrypt_msg(f'candidate,{person_id}', user_pad))
+
+    encrypted_response = my_funcs.receive_data(c_socket)
+    if encrypted_response == "ID of student didn't show up in the database of the university!".encode():
+        return 'Nothing'.encode()
+    #encrypted_signed_text = my_funcs.receive_data(c_socket)
+    #signed_text = decrypt_cipher_file(encrypted_response, user_pad)
+    decrypted_file_text = decrypt_cipher(encrypted_response, user_pad)
+    return decrypted_file_text
 
 def employer_func(c_socket, person_id, content_to_verify):
-    pass
+    print("THE PERSON ID WE SEND : " + person_id)
+    print("THE TEXT WE TRY TO SEND : " + content_to_verify)
+    c_socket.send(encrypt_msg(f'employer,{person_id},{content_to_verify}', user_pad))
+    encrypted_is_file_real = my_funcs.receive_data(c_socket)
+    is_file_real = decrypt_cipher(encrypted_is_file_real, user_pad)
+    return is_file_real
+
 
 def start_client_func(data_list):
     global seed_server, user_pad
@@ -98,15 +120,16 @@ def start_client_func(data_list):
     user_pad = SetSeed(seed_a_b[0], seed_a_b[1], seed_a_b[2])  # obj that will help to generate pads for the server
 
     user_type = data_list[0]
+    print("USER TYPE CLIENT UNI : " + user_type)
 
     if user_type == 'candidate':
-        t1 = threading.Thread(target=candidate_func, args=(client_sock, data_list[1]))
+        res = candidate_func(client_sock, data_list[1])
     else:
-        t1 = threading.Thread(target=employer_func, args=(client_sock, data_list[1], data_list[2]))
+        res = employer_func(client_sock, data_list[1], data_list[2])
 
-    t1.start()
+    return res
 
-
+'''
 if __name__ == '__main__':
     # TODO : IN C MODE, WHEN THERE IS ALREADY DIPLOMA, CHECK WHY IT ADDS (cid:10)
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -138,7 +161,7 @@ if __name__ == '__main__':
             print(documents_path)
 
             sign_of_path = "/" if documents_path.__contains__("/") else "\\"
-            full_diploma_path_pdf = documents_path + sign_of_path + find_signed_file_name(id_of_candidate)
+            full_diploma_path_pdf = documents_path + sign_of_path + find_signed_file_name_uni(id_of_candidate)
             full_diploma_path_text = full_diploma_path_pdf.replace(".pdf", ".txt")
             print(full_diploma_path_pdf)
             print(full_diploma_path_text)
@@ -186,3 +209,4 @@ if __name__ == '__main__':
         print(status_response)
 
     client_socket.close()
+    '''

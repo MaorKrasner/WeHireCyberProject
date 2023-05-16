@@ -6,7 +6,7 @@ from UniversityDirectory import my_hmac_functions
 from UniversityDirectory.file_convertor import *
 import textwrap
 
-conn = sqlite3.connect('UniversityDatabase.db', check_same_thread=False)
+conn = sqlite3.connect('C://Users//maork//OneDrive//Desktop//WeHireCyberProject//UniversityDirectory//UniversityDatabase.db', check_same_thread=False)
 
 cursor = conn.cursor()
 
@@ -14,13 +14,13 @@ cursor = conn.cursor()
 university_directory_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + "\\UniversityStudentsDiplomasFolder" + "\\"
 
 
-def insert_row_into_table(table_name, values_tuple):
+def insert_row_into_table_uni(table_name, values_tuple):
     command = "INSERT INTO " + table_name + " " + "VALUES " + str(values_tuple)
     cursor.execute(command)
     conn.commit()
 
 
-def print_all_rows_in_table(table_name):
+def print_all_rows_in_table_uni(table_name):
     select_query_command = """SELECT * from """ + table_name
     cursor.execute(select_query_command)
     rows = cursor.fetchall()
@@ -33,15 +33,15 @@ def print_all_rows_in_table(table_name):
     conn.commit()
 
 
-def find_student_in_students_table(id_of_student):
+def find_student_in_students_table_uni(id_of_student):
     find_student_query = "SELECT ID FROM students WHERE ID = " + str(id_of_student) + ";"
     student_query_result = cursor.execute(find_student_query).fetchone()
     conn.commit()
     return student_query_result is not None
 
 
-def find_signing_key_for_diploma(id_of_student):
-    if not find_student_in_students_table(id_of_student):
+def find_signing_key_for_diploma_uni(id_of_student):
+    if not find_student_in_students_table_uni(id_of_student):
         return "0"
 
     find_key_query = "SELECT Signing_key FROM certificates WHERE Student_ID = " + str(id_of_student) + ";"
@@ -50,7 +50,7 @@ def find_signing_key_for_diploma(id_of_student):
     return str(find_key_query_result)
 
 
-def find_signed_file_name(id_of_student):
+def find_signed_file_name_uni(id_of_student):
     file_name_query = "SELECT Signed_file_name FROM certificates WHERE Student_ID = " + str(id_of_student) + ";"
     file_name_query_result = cursor.execute(file_name_query).fetchone()
     conn.commit()
@@ -58,7 +58,7 @@ def find_signed_file_name(id_of_student):
 
 
 def create_and_sign_diploma(person_id, signing_key):
-    if not find_student_in_students_table(person_id):
+    if not find_student_in_students_table_uni(person_id):
         return False, "Text with nothing in it"
 
     find_student_name_query = "SELECT First ||' '|| Last FROM students WHERE ID = " + str(person_id) + ";"
@@ -69,11 +69,11 @@ def create_and_sign_diploma(person_id, signing_key):
     # means the student already got the diploma from the university and there is no need to sign it again,
     # just to send true and the content
     if os.path.exists(path_to_check_if_diploma_already_exists):
-        with open(path_to_check_if_diploma_already_exists, 'rb') as f:
-            pdf_file_content = f.read()
+        with open(path_to_check_if_diploma_already_exists, 'r') as f:
+            txt_file_content = f.read()
         f.close()
 
-        return True, pdf_file_content
+        return True, txt_file_content
 
     find_grades_for_courses_query = """SELECT subjects.Subject_name, grades.grade
                                         FROM subjects INNER JOIN (grades INNER JOIN students ON grades.Student_ID = students.ID) 
@@ -86,12 +86,12 @@ def create_and_sign_diploma(person_id, signing_key):
     text_file_path = university_directory_path + str(name_query_res[0]) + " " + str(person_id) + ".txt"
 
     pdf_text_to_enter = ""
-    pdf_text_to_enter += "University of Tel Aviv\r\n\r\n"
-    pdf_text_to_enter += f'Student name : {name_query_res[0]}\r\n'
+    pdf_text_to_enter += "University of Tel Aviv\n\n"
+    pdf_text_to_enter += f'Student name : {name_query_res[0]}\n'
     pdf_text_to_enter += f'Student ID : {person_id}'
-    pdf_text_to_enter += f'\r\n\r\n\r\n-------------------- GRADES --------------------\r\n\r\n\r\n'
+    pdf_text_to_enter += f'\n\n\n-------------------- GRADES --------------------\n\n\n'
     for i in range(1, len(grades_for_courses_list)):
-        pdf_text_to_enter +=f'{grades_for_courses_list[i][0]} : {grades_for_courses_list[i][1]}\r\n'
+        pdf_text_to_enter +=f'{grades_for_courses_list[i][0]} : {grades_for_courses_list[i][1]}\n'
 
     with open(text_file_path, 'wb') as f:
         f.write(pdf_text_to_enter.encode())
@@ -109,16 +109,16 @@ def create_and_sign_diploma(person_id, signing_key):
 
     sign_to_split_with = "/" if str(text_file_path).__contains__("/") else "\\"
 
-    insert_row_into_table("certificates", (person_id, str(text_file_path.split(sign_to_split_with)[-1]), str(text_file_sign_digest.hex()), signing_key))
+    insert_row_into_table_uni("certificates", (person_id, str(text_file_path.split(sign_to_split_with)[-1]), str(text_file_sign_digest.hex()), signing_key))
 
-    with open(text_file_path, 'rb') as file_to_send:
+    with open(text_file_path, 'r') as file_to_send:
         message_to_send = file_to_send.read()
     file_to_send.close()
 
     return True, message_to_send
 
 def verify_integrity_of_certificate(id_of_student, message_that_student_passed):
-    if not find_student_in_students_table(id_of_student):
+    if not find_student_in_students_table_uni(id_of_student):
         return False
 
     info_about_student = "SELECT Signed_file_digest, Signing_key from certificates WHERE Student_ID = " + str(id_of_student) + ";"
@@ -133,10 +133,12 @@ def verify_integrity_of_certificate(id_of_student, message_that_student_passed):
     digest_of_file_student_passed = my_hmac_functions.hmac_sign_with_sha256(signing_key, message_that_student_passed)
     print(str(digest_of_file_student_passed.hex()))
 
+    print("NEEDS TO BE : " + str(original_file_digest == str(digest_of_file_student_passed.hex())))
+
     return original_file_digest == str(digest_of_file_student_passed.hex())
 
 
-def close_connection():
+def close_connection_uni():
     conn.close()
 
 
@@ -180,7 +182,7 @@ if __name__ == '__main__':
     signed_file_name_query = "SELECT Signed_file_name from certificates WHERE Student_ID = " + str(current_student_id) + ";"
     signed_file_name_query_result = cursor.execute(signed_file_name_query).fetchall()
 
-    file_path_to_check = 'C://Users//maork//OneDrive//Desktop//newmaor.txt'
+    file_path_to_check = 'C://Users//maork//OneDrive//Desktop//WeHireCyberProject//ChatDirectory//maorkr_213225576.txt'
     print(os.path.exists(file_path_to_check))
     #file_path_to_check = university_directory_path + str(signed_file_name_query_result[0][0])
     #file_path_to_check = "/Users/maorkrasner/Desktop/Tom Yanover 213225577.txt"

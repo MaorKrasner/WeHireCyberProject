@@ -9,6 +9,8 @@ from cryptography.fernet import Fernet
 import logging
 import hashlib
 import hmac
+import UniversityDirectory.university_client
+from UniversityDirectory.university_client import *
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -164,7 +166,7 @@ def session_with_client(client_socket):  # start the session
             # encrypt the password to the database
             key = Fernet.generate_key()
 
-            insert_row_into_table("client_password_key", (user_name, key.decode()))
+            insert_row_into_table_uni("client_password_key", (user_name, key.decode()))
 
             f_obj = Fernet(key)
 
@@ -172,7 +174,7 @@ def session_with_client(client_socket):  # start the session
             encrypted_msg = f_obj.encrypt(msg)
 
             insert_row_into_table("client_user",
-                                  (user_name, first_name, last_name, encrypted_msg.decode(), user_type, user_ID, company_name))
+                                      (user_name, first_name, last_name, encrypted_msg.decode(), user_type, user_ID, company_name))
 
             client_password_key[user_name] = f_obj
             clients_users[user_name] = [first_name, last_name, password, user_type, user_ID, company_name]
@@ -255,9 +257,9 @@ def session_with_client(client_socket):  # start the session
                         break
                 print('***')
                 public_key_private = my_funcs.receive_data(client_socket)
-                print(f'public key from c {public_key_private};')
+                print(f'public key from creator {public_key_private};')
                 pq_private = my_funcs.receive_data(client_socket)
-                print(f'pq key from c {pq_private};')
+                print(f'pq key from creator {pq_private};')
                 clients[sec_user].send(encrypt_msg('second_participant', client_seeds[clients[sec_user]][3]))
                 clients[sec_user].send(public_key_private)
                 time.sleep(0.05)
@@ -404,6 +406,70 @@ def session_with_client(client_socket):  # start the session
                                 string_to_send = f'{to_who} is currently offline.'
 
                         client_socket.send(encrypt_msg(string_to_send, client_seeds[client_socket][3]))
+
+                    elif msg_from_client == 'VERIFY':
+                        encrypted_file_name_to_verify = my_funcs.receive_data(client_socket)
+                        file_name_to_verify = decrypt_cipher(encrypted_file_name_to_verify, client_seeds[client_socket][3]) # PROB HERE
+
+                        type_of_user = clients_users[user_name][3]
+
+                        encrypted_block_file_verify = my_funcs.receive_data(client_socket)
+                        block_file_verify = decrypt_cipher_file(encrypted_block_file_verify,
+                                                                client_seeds[client_socket][3])
+
+                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "wb")
+                        f.write(block_file_verify)
+                        f.close()
+
+                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                        line = f.readline()
+                        while "Student ID" not in line:
+                            line = f.readline()  # this is the row where the id is included
+                        f.close()
+
+                        try:
+                            ID_of_person = line.split(':')[1][1:10]  # extract the id from the line
+                            print("THE ID OF THE PERSON WE NEED TO VERIFY IS : " + str(ID_of_person))
+                        except SyntaxError:
+                            print("Could not read correctly the id!")
+                            ID_of_person = "35"
+
+                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                        text_to_verify = f.read()
+                        f.close()
+                        data_list = [type_of_user, ID_of_person, text_to_verify]
+
+                        result = start_client_func(data_list)
+                        os.remove(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}")
+                        client_socket.send(encrypt_msg("verification", client_seeds[client_socket][3]))
+
+                        if type_of_user == 'employer':
+                            client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                        else:
+                            client_socket.send("You can't verify a document if you are a candidate!!!".encode())
+
+
+                    elif msg_from_client == 'SIGN':
+                        type_of_user = clients_users[user_name][3]
+
+                        if type_of_user == 'candidate':
+                            ID_of_person = clients_users[user_name][4]
+                            print(f'ID of {user_name} is {ID_of_person}')
+                            data_list = [str(type_of_user), str(ID_of_person)]
+                            result = start_client_func(data_list)
+
+                            if result == 'Nothing'.encode():
+                                client_socket.send('Nothing'.encode())
+                            else:
+                                client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                                time.sleep(0.5)
+                                client_socket.send(encrypt_msg(f'{user_name}_{ID_of_person}.txt', client_seeds[client_socket][3]))
+                                client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                        else:
+                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                            client_socket.send("You can't get a sign of a certificate if you are an employer!!!".encode())
+
+
 
                     elif msg_from_client == 'WEBCAM':  # the user wants to open his camera
                         for others_clients in clients.values():

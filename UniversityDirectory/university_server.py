@@ -10,13 +10,19 @@ from ChatDirectory.otp_funcs import *
 def key_exchange(client_socket):
     abseed = []
     public_key_and_pq = my_funcs.receive_data_with_decode(client_socket)  # get the public key and the pq
+    print("CLIENT RECEIVED PUBLIC AND PQ")
     public_pq = [int(i) for i in public_key_and_pq.split(' ')]  # first public key second pq
+    print("CLIENT PUBLIC KEY : " + str(public_pq[0]))
+    print("CLIENT PQ : " + str(public_pq[1]))
 
     # create the seed randomly and send it to the client
     seed = random.randint(0, 5000)
+    print("CLIENT SEED : " + str(seed))
     a = random.randint(10, 99)
+    print("CLIENT A : " + str(a))
     abseed.append(a)
     b = random.randint(10, 99)
+    print("CLIENT B : " + str(b))
     abseed.append(b)
     abseed.append(seed)
 
@@ -24,12 +30,13 @@ def key_exchange(client_socket):
     enc_seed = my_funcs.rsa_encryption_decryption(public_pq[1], public_pq[0], public_pq[2])     # encrypt the seed
 
     client_socket.send(str(enc_seed).encode())  # send the enc seed to the client
+    print("CLIENT SENT ENC SEED")
 
-    enc_a = my_funcs.rsa_encryption_decryption(public_pq[1], public_pq[0], ab[0])
-    client_socket.send(str(enc_a).encode())
+    enc_a = my_funcs.rsa_encryption_decryption(public_pq[1], public_pq[0], abseed[0])
+    enc_b = my_funcs.rsa_encryption_decryption(public_pq[1], public_pq[0], abseed[1])
 
-    enc_b = my_funcs.rsa_encryption_decryption(public_pq[1], public_pq[0], ab[1])
-    client_socket.send(str(enc_b).encode())
+    client_socket.send(f'{enc_a}:{enc_b}'.encode())
+    print("CLIENT SENT ENC A AND B")
 
     abseed[0] = int(str(a) + str(b))
     abseed[1] = int(str(b) + str(a))
@@ -68,58 +75,39 @@ def create_random_key(n):
 
 
 
-def session_with_client(sock):
+def session_with_client_uni(sock):
     ab_seed = key_exchange(sock)
     pad = SetSeed(ab_seed[2], ab_seed[0], ab_seed[1])
 
     encrypted_user_type = my_funcs.receive_data(sock)
-    user_type = decrypt_cipher(encrypted_user_type, pad)
+    user_type_and_others = decrypt_cipher(encrypted_user_type, pad).split(',')  # all the data that is passed through the socket
+
+    print("TYPE : " + user_type_and_others[0])
 
     #candidate section
-    if user_type == 'candidate':
-        encrypted_person_id = my_funcs.receive_data(sock)
-        person_id = decrypt_cipher(encrypted_person_id, pad)
+    if user_type_and_others[0] == 'candidate':
+        print("I'M IN UNI FUNC!")
+        person_id = user_type_and_others[1]
+        print("PERSON ID TO SIGN: " + person_id)
         signing_key = create_random_key(random.randint(32, 128))
+        print("SIGNING KEY : " + ''.join(signing_key))
 
         status, message = create_and_sign_diploma(person_id, signing_key)
+        print("STATUS : " + str(status))
 
         if status:
-            pass
+            sock.send(encrypt_msg(message, pad))
         else:
             sock.send("ID of student didn't show up in the database of the university!".encode())
 
     # employer section
     else:
-        pass
+        person_id, content_to_verify = user_type_and_others[1], user_type_and_others[2]
+        print("PERSON ID TO VERIFY: " + person_id)
+        print("CONTENT TO VERIFY : " + content_to_verify)
 
-    status_of_person = sock.recv(1024).decode()
-    message_back = "The server received a request from "
-    addition_to_send = "a candidate" if status_of_person == "c" else "an employer"
-    message_back += addition_to_send
-    sock.send(message_back.encode())
-
-    if status_of_person == "c":
-        info_list = client_socket.recv(1024).decode().split(" ")
-        id_of_candidate, key_to_sign_diploma = info_list[0], info_list[1]
-        status, message = create_and_sign_diploma(id_of_candidate, key_to_sign_diploma)
-        #status, message = create_diploma_and_sign_it(id_of_candidate, key_to_sign_diploma)
-
-        print("status is : " + str(status))
-
-        if status is True:
-            sock.send(message)
-        else:
-            sock.send("ID of student didn't show up in the database of the university!".encode())
-    else:
-        id_of_candidate = sock.recv(1024).decode()
-        sock.send(("Server Received id : " + id_of_candidate).encode())
-        binary_file_to_check_content = my_funcs.receive_data(sock)
-        status = verify_integrity_of_certificate(id_of_candidate, binary_file_to_check_content)
-        if status:
-            sock.send("The student's diploma is real".encode())
-        else:
-            sock.send(
-                "The student changed his diploma/The ID of student didn't show up in the database of the university!".encode())
+        status_of_verification = verify_integrity_of_certificate(person_id, content_to_verify.encode())
+        sock.send(encrypt_msg(str(status_of_verification), pad))
 
 
 
@@ -129,7 +117,7 @@ if __name__ == '__main__':
     # bind ip and port to socket
     s.bind(('0.0.0.0', 2358))  # **************************************
     # set client queue to 5
-    s.listen(10)
+    s.listen(20)
 
     # server is listening all the time!!!
     while True:
@@ -137,5 +125,6 @@ if __name__ == '__main__':
         client_socket, address = s.accept()
         print(f'connection from {address} has been established')
 
-        t1 = threading.Thread(target=session_with_client, args=(client_socket,))
-        t1.start()
+        session_with_client_uni(client_socket)
+        #t1 = threading.Thread(target=session_with_client, args=(client_socket,))
+        #t1.start()

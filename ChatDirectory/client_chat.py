@@ -31,6 +31,7 @@ seed_server = 0
 hmac_flag_txt = False
 hmac_flag_photo = False
 hack_flag = False
+verify_flag = False
 
 
 def key_exchange(server_socket, p, q, x):
@@ -255,8 +256,57 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                     text_box.see(END)
                     continue
 
+            elif msg_from_server == 'sign document':
+                encrypted_verified_file_name_from_server = my_funcs.receive_data(s)
 
-            if msg_from_server == 'start camera':
+                if encrypted_verified_file_name_from_server == "You can't get a sign of a certificate if you are an employer!!!".encode():
+                    text_box.configure(state=NORMAL)
+                    text_box.insert(END, "You can't get a sign of a certificate if you are an employer!!!")
+                    text_box.insert(END, '\n')
+                    text_box.configure(state=DISABLED)
+                    text_box.see(END)
+
+                else:
+                    verified_file_name_from_server = decrypt_cipher(encrypted_verified_file_name_from_server, pad)
+
+                    f = open(verified_file_name_from_server, 'wb')
+                    enc_block_file = my_funcs.receive_data(s)
+                    block_file = decrypt_cipher(enc_block_file, pad)
+                    f.write(block_file.encode())
+                    f.close()
+
+                    text_box.configure(state=NORMAL)
+                    text_box.insert(END, f'{verified_file_name_from_server} file successfully downloaded')
+                    text_box.insert(END, '\n')
+                    text_box.configure(state=DISABLED)
+                    text_box.see(END)
+
+            elif msg_from_server == 'verification':
+                encrypted_verification_result = my_funcs.receive_data(s)
+
+                if encrypted_verification_result == "You can't verify a document if you are a candidate!!!".encode():
+                    text_box.configure(state=NORMAL)
+                    text_box.insert(END, "You can't verify a document if you are a candidate!!!")
+                    text_box.insert(END, '\n')
+                    text_box.configure(state=DISABLED)
+                    text_box.see(END)
+
+                else:
+                    verification_result = decrypt_cipher(encrypted_verification_result, pad)
+                    if verification_result == 'True':
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, f'The filed you verified is real')
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+                    else:
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, f'The filed you verified is fake/changed')
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+
+            elif msg_from_server == 'start camera':
                 enc_from_who = my_funcs.receive_data(s)
                 from_who = decrypt_cipher(enc_from_who, pad)
 
@@ -286,12 +336,12 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 cv2.destroyAllWindows()
 
 
-            if msg_from_server == 'creator_rsa':    # the client that wants to start private session, create the keys
+            elif msg_from_server == 'creator_rsa':    # the client that wants to start private session, create the keys
                 key_exchange_for_private(s, random.choice(primes), random.choice(primes),
                                          random.randint(10, 100))
                 private_flag = True
 
-            if msg_from_server == 'second_participant':    # the second client in the private session create the key, encrypt it and send back
+            elif msg_from_server == 'second_participant':    # the second client in the private session create the key, encrypt it and send back
                 public_key = int(my_funcs.receive_data_with_decode(s))
                 print(public_key)
                 qp = int(my_funcs.receive_data_with_decode(s))
@@ -306,13 +356,15 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 s.send(str(enc_seed).encode())
                 private_flag = True
 
-            print(msg_from_server)
+            else:
+                print(msg_from_server)
 
-            text_box.configure(state=NORMAL)
-            text_box.insert(END, msg_from_server)
-            text_box.insert(END, '\n')
-            text_box.configure(state=DISABLED)
-            text_box.see(END)
+                text_box.configure(state=NORMAL)
+                text_box.insert(END, msg_from_server)
+                text_box.insert(END, '\n')
+                text_box.configure(state=DISABLED)
+                text_box.see(END)
+
         else:                                                       # the client in a private session
             enc_private_msg_from_server = my_funcs.receive_data(s)
             if enc_private_msg_from_server == '1'.encode():        # exit from the private session
@@ -423,6 +475,7 @@ def session_func(user_msg, textbox):
     global hmac_flag_txt
     global hmac_flag_photo
     global hack_flag
+    global verify_flag
 
     # step 6- client send some msg to server (get the msg as input from the user)
     if private_flag:     # the client in a private session
@@ -508,9 +561,34 @@ def session_func(user_msg, textbox):
             hmac_flag_photo = False
             return 'sent'
 
+        if verify_flag:
+            try:
+                f = open(user_msg)
+                f.close()
+            except IOError:
+                print("File not accessible")
+                enc_file_name_to_send = encrypt_msg('File not accessible', user_pad)
+                s.send(enc_file_name_to_send)
+                hmac_flag_photo = False
+                return 'File not accessible'
+
+            enc_file_name_to_send = encrypt_msg(user_msg, user_pad)
+            s.send(enc_file_name_to_send)
+
+            f = open(user_msg, 'rb')
+            block_to_verify = f.read()
+            encrypted_block = encrypt_file(block_to_verify, user_pad)
+            s.send(encrypted_block)
+            f.close()
+
+            verify_flag = False
+            return 'sent'
 
         if user_msg == 'FILE':
             hmac_flag_photo = True
+
+        if user_msg == 'VERIFY':
+            verify_flag = True
 
         if user_msg == 'HACK':     # information is interrupted
             hack_flag = True
