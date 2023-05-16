@@ -1,0 +1,14 @@
+University of Tel Aviv
+
+Student name : Tom Yanover
+Student ID : 213225577
+
+
+-------------------- GRADES --------------------
+
+
+Data structures and algorithms : 90
+Low level programming in C and Assembly : 90
+Linear algebra : 95
+Databases and SQL : 95
+Physics : 95

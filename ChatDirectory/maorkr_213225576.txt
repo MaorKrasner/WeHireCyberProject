@@ -1,0 +1,13 @@
+University of Tel Aviv
+
+Student name : Maor Krasner
+Student ID : 213225576
+
+
+-------------------- GRADES --------------------
+
+
+Fullstack development : 100
+Data structures and algorithms : 100
+Programming in python : 85
+Databases and SQL : 93
