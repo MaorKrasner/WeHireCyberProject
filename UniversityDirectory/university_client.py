@@ -83,26 +83,21 @@ def create_random_key(n):
 
 
 def candidate_func(c_socket, person_id):
-    #c_socket.send(encrypt_msg("candidate", user_pad))
-    #c_socket.send(encrypt_msg(person_id, user_pad))
-
-    #c_socket.send(f'candidate {person_id}'.encode())
-    #c_socket.send(''.join(person_id).encode())
-
     c_socket.send(encrypt_msg(f'candidate,{person_id}', user_pad))
 
     encrypted_response = my_funcs.receive_data(c_socket)
     if encrypted_response == "ID of student didn't show up in the database of the university!".encode():
-        return 'Nothing'.encode()
-    #encrypted_signed_text = my_funcs.receive_data(c_socket)
-    #signed_text = decrypt_cipher_file(encrypted_response, user_pad)
+        return "ID of student didn't show up in the database of the university!".encode()
+
     decrypted_file_text = decrypt_cipher(encrypted_response, user_pad)
     return decrypted_file_text
 
 def employer_func(c_socket, person_id, content_to_verify):
     print("THE PERSON ID WE SEND : " + person_id)
     print("THE TEXT WE TRY TO SEND : " + content_to_verify)
+
     c_socket.send(encrypt_msg(f'employer,{person_id},{content_to_verify}', user_pad))
+
     encrypted_is_file_real = my_funcs.receive_data(c_socket)
     is_file_real = decrypt_cipher(encrypted_is_file_real, user_pad)
     return is_file_real

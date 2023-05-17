@@ -143,9 +143,10 @@ def close_connection_uni():
 
 
 if __name__ == '__main__':
-    #cursor.execute("DELETE FROM certificates")
-    #conn.commit()
+    cursor.execute("DELETE FROM certificates WHERE Student_ID = 213225576")
+    conn.commit()
 
+    '''
     create_and_sign_diploma(213225576, 'asdhuaisnduians')
 
     #create_and_sign_diploma(213225576, "uashdiy31231273tybd")
@@ -220,3 +221,4 @@ if __name__ == '__main__':
     # insert_row_into_table("subjects", (11, "Databases and SQL"))
 
     # conn.commit()
+    '''

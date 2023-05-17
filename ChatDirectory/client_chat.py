@@ -257,17 +257,24 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                     continue
 
             elif msg_from_server == 'sign document':
-                encrypted_verified_file_name_from_server = my_funcs.receive_data(s)
+                encrypted_response_about_sign = my_funcs.receive_data(s)
 
-                if encrypted_verified_file_name_from_server == "You can't get a sign of a certificate if you are an employer!!!".encode():
+                if encrypted_response_about_sign == "You can't get a sign of a certificate if you are an employer!!!".encode():
                     text_box.configure(state=NORMAL)
                     text_box.insert(END, "You can't get a sign of a certificate if you are an employer!!!")
                     text_box.insert(END, '\n')
                     text_box.configure(state=DISABLED)
                     text_box.see(END)
 
+                elif encrypted_response_about_sign == "ID of student didn't show up in the database of the university!".encode():
+                    text_box.configure(state=NORMAL)
+                    text_box.insert(END, "Your ID didn't show up in the database of the university!")
+                    text_box.insert(END, '\n')
+                    text_box.configure(state=DISABLED)
+                    text_box.see(END)
+
                 else:
-                    verified_file_name_from_server = decrypt_cipher(encrypted_verified_file_name_from_server, pad)
+                    verified_file_name_from_server = decrypt_cipher(encrypted_response_about_sign, pad)
 
                     f = open(verified_file_name_from_server, 'wb')
                     enc_block_file = my_funcs.receive_data(s)
@@ -315,7 +322,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 while True:
                     while len(data) < payload_size:
                         packet = my_funcs.receive_data(s)
-                        msg = decrypt_cipher_file(packet, user_pad)
+                        #msg = decrypt_cipher_file(packet, user_pad)
                         if not packet:
                             break
                         data += packet
@@ -325,7 +332,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
 
                     while len(data) < msg_size:
                         data += my_funcs.receive_data(s)
-                        msg = decrypt_cipher_file(data, user_pad)
+                        #msg = decrypt_cipher_file(data, user_pad)
                     frame_data = data[:msg_size]
                     data = data[msg_size:]
                     frame = pickle.loads(frame_data)
@@ -334,7 +341,6 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                     if key == 20:
                         break
                 cv2.destroyAllWindows()
-
 
             elif msg_from_server == 'creator_rsa':    # the client that wants to start private session, create the keys
                 key_exchange_for_private(s, random.choice(primes), random.choice(primes),
@@ -607,19 +613,19 @@ def session_func(user_msg, textbox):
                 frame = imutils.resize(frame, width=320)
                 a = pickle.dumps(frame)
                 message = struct.pack("Q", len(a)) + a
-                enc_msg = encrypt_file(message, user_pad)
-                s.send(enc_msg)
+                # enc_msg = encrypt_file(message, user_pad)
+                s.send(message)
                 cv2.imshow('MY VIDEO', frame)
-                #key = cv2.waitKey(1) & 0xFF
-                #print(c)
-                #if c < 600:
+                key = cv2.waitKey(1) & 0xFF
+                print(c)
+                #if c < 60000000:
                 #    cv2.destroyAllWindows()
                 #    break
             return
-        enc_msg_to_send = encrypt_msg(user_msg, user_pad)
-        # print(enc_msg_to_send)
-        # print(type(enc_msg_to_send))
-        s.send(enc_msg_to_send)
-        return 'continue'
+
+        else:
+            enc_msg_to_send = encrypt_msg(user_msg, user_pad)
+            s.send(enc_msg_to_send)
+            return 'continue'
 
 #start()

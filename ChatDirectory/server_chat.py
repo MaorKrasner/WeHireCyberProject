@@ -166,7 +166,7 @@ def session_with_client(client_socket):  # start the session
             # encrypt the password to the database
             key = Fernet.generate_key()
 
-            insert_row_into_table_uni("client_password_key", (user_name, key.decode()))
+            insert_row_into_table("client_password_key", (user_name, key.decode()))
 
             f_obj = Fernet(key)
 
@@ -286,7 +286,7 @@ def session_with_client(client_socket):  # start the session
 
             else:
                 encrypted_message_from_client = my_funcs.receive_data(client_socket)
-                #TODO : FIX THE PROBLEM FOR THE MSG FROM CLIENT, IT DOESN'T WORK WITHOUT THE CONDITIONS ELSE
+                #TODO : FIX THE PROBLEM FOR THE MSG FROM CLIENT, DOESN'T WORK IN CAMERA MODE
                 msg_from_client = decrypt_cipher(encrypted_message_from_client, client_seeds[client_socket][3]) # get the original message
 
                 if user_name in private_sessions.keys():   # the user is in private session
@@ -422,17 +422,31 @@ def session_with_client(client_socket):  # start the session
                         f.close()
 
                         f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
-                        line = f.readline()
-                        while "Student ID" not in line:
-                            line = f.readline()  # this is the row where the id is included
+                        lines = f.readlines()
                         f.close()
 
+                        student_id_line = ""
+
+                        for line in lines:
+                            if "Student ID" in line:
+                                student_id_line = line
+                                break
+
+                        if student_id_line != "":
+                            ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
+                            print("ID FOUND : " + ID_of_person)
+                        else:
+                            ID_of_person = "35"
+                            print("ID NOT FOUND!!! ID SET TO DEFAULT VALUE OF 35")
+
+                        '''
                         try:
-                            ID_of_person = line.split(':')[1][1:10]  # extract the id from the line
+                            ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
                             print("THE ID OF THE PERSON WE NEED TO VERIFY IS : " + str(ID_of_person))
                         except SyntaxError:
                             print("Could not read correctly the id!")
                             ID_of_person = "35"
+                        '''
 
                         f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
                         text_to_verify = f.read()
@@ -449,6 +463,7 @@ def session_with_client(client_socket):  # start the session
                             client_socket.send("You can't verify a document if you are a candidate!!!".encode())
 
 
+                    #TODO : ADD FUNCTIONALITY TO SOMEONE WHO DIDN'T STUDY IN THE UNIVERSITY
                     elif msg_from_client == 'SIGN':
                         type_of_user = clients_users[user_name][3]
 
@@ -458,8 +473,9 @@ def session_with_client(client_socket):  # start the session
                             data_list = [str(type_of_user), str(ID_of_person)]
                             result = start_client_func(data_list)
 
-                            if result == 'Nothing'.encode():
-                                client_socket.send('Nothing'.encode())
+                            if result == "ID of student didn't show up in the database of the university!".encode():
+                                client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                                client_socket.send("ID of student didn't show up in the database of the university!".encode())
                             else:
                                 client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
                                 time.sleep(0.5)
@@ -469,8 +485,6 @@ def session_with_client(client_socket):  # start the session
                             client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
                             client_socket.send("You can't get a sign of a certificate if you are an employer!!!".encode())
 
-
-
                     elif msg_from_client == 'WEBCAM':  # the user wants to open his camera
                         for others_clients in clients.values():
                             if others_clients is not client_socket:
@@ -479,13 +493,14 @@ def session_with_client(client_socket):  # start the session
                                     others_clients.send(encrypt_msg(user_name, client_seeds[others_clients][3]))
 
                         encrypted_video_frame = my_funcs.receive_data(client_socket)
-                        while encrypted_video_frame:
+                        while encrypted_video_frame is not None:
                             for others_clients in clients.values():
                                 if others_clients is not client_socket:
                                     if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
                                         others_clients.send(encrypted_video_frame)
 
                             encrypted_video_frame = my_funcs.receive_data(client_socket)
+
 
                     elif msg_from_client == 'FILE':  # the user wants to send a file
                         enc_file_name = my_funcs.receive_data(client_socket)
