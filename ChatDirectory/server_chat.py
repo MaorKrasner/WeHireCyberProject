@@ -228,6 +228,7 @@ def session_with_client(client_socket):  # start the session
                     private_sessions[user_name] = [sec_user, 'received seed']
                     break
             print('c')
+
             enc_private_msg_from_client = my_funcs.receive_data(client_socket)
             if enc_private_msg_from_client == '1'.encode():
                 print("OPTION 1 : ")
@@ -235,7 +236,11 @@ def session_with_client(client_socket):  # start the session
                 print("Private sessions values : " + str(private_sessions.values()))
                 private_sessions.pop(sec_user)
                 private_sessions.pop(user_name)
-            clients[sec_user].send(enc_private_msg_from_client)
+                clients[sec_user].send(enc_private_msg_from_client)
+            else:
+                private_msg_from_client = decrypt_cipher(enc_private_msg_from_client, client_seeds[client_socket[3]])
+                #clients[sec_user].send(enc_private_msg_from_client)
+                clients[sec_user].send(encrypt_msg(private_msg_from_client, client_seeds[clients[sec_user][3]]))
 
         if user_name in private_sessions.keys() and private_sessions[user_name][1] == 'received seed':
             second_user = private_sessions[user_name][0]
@@ -265,6 +270,7 @@ def session_with_client(client_socket):  # start the session
                 time.sleep(0.05)
                 clients[sec_user].send(pq_private)
                 private_sessions[sec_user][1] = 'received public key and pq'
+
 
             if user_name in private_sessions.keys() and private_sessions[user_name][1] == 'received public key and pq':   # part 4
                 print('****')

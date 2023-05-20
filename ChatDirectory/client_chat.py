@@ -386,7 +386,8 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 text_box.see(END)
             else:
                 if private_flag:
-                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1]) # list index out of range
+                    #private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1]) # list index out of range
+                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, pad)  # list index out of range
 
                     print(private_msg_from_server)
 
@@ -497,7 +498,8 @@ def session_func(user_msg, textbox):
             data_list_for_private.clear()
             return 'continue'
         else:
-            enc_private_msg_to_send = encrypt_msg(user_msg, data_list_for_private[-1])
+            #enc_private_msg_to_send = encrypt_msg(user_msg, data_list_for_private[-1])
+            enc_private_msg_to_send = encrypt_msg(user_msg, user_pad)
             s.send(enc_private_msg_to_send)
             return 'continue'
     else:
