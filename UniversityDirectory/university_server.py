@@ -126,5 +126,3 @@ if __name__ == '__main__':
         print(f'connection from {address} has been established')
 
         session_with_client_uni(client_socket)
-        #t1 = threading.Thread(target=session_with_client, args=(client_socket,))
-        #t1.start()

@@ -56,12 +56,12 @@ class chat_application_info_page:
                          text='And then to who(username), will start a private session with this user.', font="Helvetica 15").place(x=95, y=160)
 
         sign1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='!SIGN:', font="Helvetica 15 bold").place(x=10, y=195)
+                      text='SIGN:', font="Helvetica 15 bold").place(x=10, y=195)
         sign2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                       text='create diploma and sign it (for candidate only!)', font="Helvetica 15 bold").place(x=80, y=195)
 
         verify1 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
-                      text='!VERIFY:', font="Helvetica 15 bold").place(x=10, y=230)
+                      text='VERIFY:', font="Helvetica 15 bold").place(x=10, y=230)
         verify2 = Label(self.window, bg=BG_COLOR, fg=TEXT_COLOR,
                       text='check if diploma is real (for employer only!)', font="Helvetica 15 bold").place(x=100, y=230)
 

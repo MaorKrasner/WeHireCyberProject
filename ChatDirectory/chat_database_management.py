@@ -95,27 +95,6 @@ def show_only_candidates_from_client_user():
 
 
 if __name__ == '__main__':
-    #table = """CREATE TABLE client_password_key
-    #    (user_name VARCHAR(255) PRIMARY KEY NOT NULL,
-    #    password_key VARCHAR(255) NOT NULL
-    #    );"""
-
-    #table = """ALTER TABLE client_user ADD company_name VARCHAR(255) NOT NULL"""
-
-    #my_cursor.execute(table)
     my_cursor.execute("DELETE FROM client_user_socket")
     my_cursor.execute("DELETE FROM client_seeds")
-
-    #insert_row_into_table("client_user", ("maorkr", "Maor", "Krasner", "asdashdihas", "candidate", "213225576", "clum"))
-    #insert_row_into_table("client_user", ("maormanager", "Mark", "Kras", "asdasasdasdihas", "employer", "0", "WeHireCyber"))
-    #insert_row_into_table("client_user",
-    #                     ("tomyan", "Tom", "Yanover", "djnhaasdhajs", "employer", "0", "Intel LTD"))
-
-    #client_usrs = {}
-
-    #insert_data_from_db_to_clients_users(client_usrs)
-    #print(client_usrs)
-
-    #my_cursor.execute("delete from client_user")
-
     db.commit()

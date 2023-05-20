@@ -86,25 +86,3 @@ def encrypt(bin_txt, bin_pad):
 
 def decrypt(cipher_txt, bin_pad):
     return bytes([int(_a) ^ int(_b) for _a, _b in zip(cipher_txt, bin_pad)])
-
-
-def main():
-    while True:
-        msg = input('enter msg:')
-        msg_bin = text_to_byte(msg)
-        print('msg_bin: ', msg_bin)
-        print(len(msg_bin))
-        # pad_bin = key_stream(len(msg_bin))
-        pad_bin = my_key_stream(len(msg_bin), random.randint(1, 999))
-        print(bytes(pad_bin, "ascii"))
-        enc = encrypt(bytes(msg_bin, 'ascii'),  bytes(pad_bin, 'ascii'))
-        print('the encryption is: ')
-        print(enc)
-        print('back to decrypt in bytes: ')
-        dec = decrypt(enc, bytes(pad_bin, 'ascii'))
-        print(dec)
-        print('back to decrypt in ascii: ')
-        print(byte_to_text(dec))
-
-
-#main()

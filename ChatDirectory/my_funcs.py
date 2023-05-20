@@ -80,11 +80,3 @@ def add_element_in_tuple(t, i, num):
     ll.append(num)
     t = tuple(ll)
     return t
-
-if __name__ == '__main__':
-    count = 0
-    for i in range(100, 1000):
-        if is_prime(i):
-            print(str(i) + "is prime")
-            count += 1
-    print(count)
