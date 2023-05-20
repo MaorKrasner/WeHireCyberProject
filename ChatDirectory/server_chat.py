@@ -237,10 +237,166 @@ def session_with_client(client_socket):  # start the session
                 private_sessions.pop(sec_user)
                 private_sessions.pop(user_name)
                 clients[sec_user].send(enc_private_msg_from_client)
+                print("Private sessions keys AFTER : " + str(private_sessions.keys()))
+                print("Private sessions values AFTER : " + str(private_sessions.values()))
             else:
-                private_msg_from_client = decrypt_cipher(enc_private_msg_from_client, client_seeds[client_socket[3]])
-                #clients[sec_user].send(enc_private_msg_from_client)
-                clients[sec_user].send(encrypt_msg(private_msg_from_client, client_seeds[clients[sec_user][3]]))
+                private_msg_from_client = decrypt_cipher(enc_private_msg_from_client, client_seeds[client_socket][3])
+
+                if private_msg_from_client == '!WEBCAM':
+                    clients[sec_user].send(encrypt_msg('start private camera', client_seeds[clients[sec_user]][3]))
+                    clients[sec_user].send(encrypt_msg(user_name, client_seeds[clients[sec_user]][3]))
+
+                    encrypted_video_frame = my_funcs.receive_data(client_socket)
+                    while encrypted_video_frame is not None:
+                        clients[sec_user].send(encrypted_video_frame)
+                        encrypted_video_frame = my_funcs.receive_data(client_socket)
+
+                elif private_msg_from_client == 'SIGN':
+                    type_of_user = clients_users[user_name][3]
+
+                    if type_of_user == 'candidate':
+                        ID_of_person = clients_users[user_name][4]
+                        print(f'ID of {user_name} is {ID_of_person}')
+                        data_list = [str(type_of_user), str(ID_of_person)]
+                        result = start_client_func(data_list)
+
+                        if result == "ID of student didn't show up in the database of the university!".encode():
+                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                            client_socket.send(
+                                "ID of student didn't show up in the database of the university!".encode())
+                        else:
+                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                            time.sleep(0.5)
+                            client_socket.send(
+                                encrypt_msg(f'{user_name}_{ID_of_person}.txt', client_seeds[client_socket][3]))
+                            client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                    else:
+                        client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                        client_socket.send("You can't get a sign of a certificate if you are an employer!!!".encode())
+
+                elif private_msg_from_client == 'VERIFY':
+                    encrypted_file_name_to_verify = my_funcs.receive_data(client_socket)
+                    file_name_to_verify = decrypt_cipher(encrypted_file_name_to_verify,
+                                                         client_seeds[client_socket][3])
+
+                    type_of_user = clients_users[user_name][3]
+
+                    encrypted_block_file_verify = my_funcs.receive_data(client_socket)
+                    block_file_verify = decrypt_cipher_file(encrypted_block_file_verify,
+                                                            client_seeds[client_socket][3])
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "wb")
+                    f.write(block_file_verify)
+                    f.close()
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                    lines = f.readlines()
+                    f.close()
+
+                    student_id_line = ""
+
+                    for line in lines:
+                        if "Student ID" in line:
+                            student_id_line = line
+                            break
+
+                    if student_id_line != "":
+                        ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
+                        print("ID FOUND : " + ID_of_person)
+                    else:
+                        ID_of_person = "35"
+                        print("ID NOT FOUND!!! ID SET TO DEFAULT VALUE OF 35")
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                    text_to_verify = f.read()
+                    f.close()
+                    data_list = [type_of_user, ID_of_person, text_to_verify]
+
+                    result = start_client_func(data_list)
+                    os.remove(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}")
+                    client_socket.send(encrypt_msg("verification", client_seeds[client_socket][3]))
+
+                    if type_of_user == 'employer':
+                        client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                    else:
+                        client_socket.send("You can't verify a document if you are a candidate!!!".encode())
+
+                elif private_msg_from_client == 'FILE':  # the user wants to send a file
+                    enc_file_name = my_funcs.receive_data(client_socket)
+                    file_name = decrypt_cipher(enc_file_name, client_seeds[client_socket][3])
+
+                    if file_name == 'File not accessible':  # the path of the file is invalid
+                        continue
+
+                    enc_file_name_hmac = my_funcs.receive_data(client_socket)
+                    file_name_hmac = decrypt_cipher(enc_file_name_hmac, client_seeds[client_socket][3])
+
+                    # TODO : CHANGE FOR MY HMAC
+                    if hmac.new(str(client_seeds[client_socket][2]).encode(), file_name.encode(),
+                                hashlib.sha256).hexdigest() == file_name_hmac:  # check the integrity of the file name
+                        f = open(f"server_temp_file.{file_name.split('.')[-1]}", "wb")
+
+                        real_digest_maker = hmac.new(str(client_seeds[client_socket][2]).encode(), ''.encode(),
+                                                     hashlib.sha256)
+
+                        encrypted_block_file = my_funcs.receive_data(client_socket)
+                        block_file = decrypt_cipher_file(encrypted_block_file, client_seeds[client_socket][3])
+
+                        while block_file != b'0':  # get the file and write it to the temporary file
+                            print('*')
+                            f.write(block_file)
+                            real_digest_maker.update(block_file)
+
+                            encrypted_block_file = my_funcs.receive_data(client_socket)
+                            block_file = decrypt_cipher_file(encrypted_block_file, client_seeds[client_socket][3])
+                            print(block_file)
+
+                        f.close()
+
+                        real_digest = real_digest_maker.hexdigest()
+                        print(f'hmac for the content in the file that sent {real_digest}')
+
+                        enc_body_file_hmac = my_funcs.receive_data(client_socket)
+                        body_file_hmac = decrypt_cipher(enc_body_file_hmac, client_seeds[client_socket][3])
+                        print(f'hmac for the real file {body_file_hmac}')
+
+                        if real_digest == body_file_hmac:  # check the integrity of the file body
+                            print(f'The FILE sent from {user_name} is original')
+                            clients[sec_user].send(encrypt_msg('get file photo', client_seeds[clients[sec_user]][3]))
+                            time.sleep(0.5)
+                            clients[sec_user].send(encrypt_msg(f'{user_name}_{os.path.basename(file_name)}', client_seeds[clients[sec_user]][3]))
+                            time.sleep(0.1)
+
+                            hmac_for_private_clients = {}
+                            hmac_for_private_clients[clients[sec_user]] = hmac.new(str(client_seeds[clients[sec_user]][2]).encode(), ''.encode(), hashlib.sha256)
+
+                            f = open(f"server_temp_file.{file_name.split('.')[-1]}", "rb")
+                            block = f.read(1024)
+
+                            while block:  # sending each file block to all the client in the room
+                                hmac_for_private_clients[clients[sec_user]].update(block)
+                                clients[sec_user].send(encrypt_msg_file(block, client_seeds[clients[sec_user]][3]))
+                                time.sleep(0.1)
+                                block = f.read(1024)
+                            f.close()
+
+                            # os.remove("server_temp_file.txt")  # remove the temp file
+                            os.remove(f"server_temp_file.{file_name.split('.')[-1]}")  # remove the temporary file we created
+                            time.sleep(0.5)
+                            clients[sec_user].send(encrypt_msg_file(b'0', client_seeds[clients[sec_user]][3]))
+
+                            time.sleep(0.1)
+                            clients[sec_user].send(encrypt_msg(hmac_for_private_clients[clients[sec_user]].hexdigest(), client_seeds[clients[sec_user]][3]))
+
+                            hmac_for_private_clients.clear()
+
+                        else:
+                            print(f'Something change in the FILE sent from {user_name} 2')
+                    else:
+                        print(f'Something change in the FILE sent from {user_name} 1')
+
+                else:
+                    clients[sec_user].send(encrypt_msg(private_msg_from_client, client_seeds[clients[sec_user]][3]))
 
         if user_name in private_sessions.keys() and private_sessions[user_name][1] == 'received seed':
             second_user = private_sessions[user_name][0]
@@ -248,12 +404,168 @@ def session_with_client(client_socket):  # start the session
             print('s')
             enc_private_msg_from_client = my_funcs.receive_data(client_socket)
             if enc_private_msg_from_client == '1'.encode():
-                private_sessions.pop(user_name)
-                private_sessions.pop(second_user)
                 print("OPTION 2 : ")
                 print("Private sessions keys : " + str(private_sessions.keys()))
                 print("Private sessions values : " + str(private_sessions.values()))
-            clients[second_user].send(enc_private_msg_from_client)
+                private_sessions.pop(user_name)
+                private_sessions.pop(second_user)
+                clients[second_user].send(enc_private_msg_from_client)
+                print("Private sessions keys AFTER : " + str(private_sessions.keys()))
+                print("Private sessions values AFTER : " + str(private_sessions.values()))
+            else:
+                private_msg_from_client = decrypt_cipher(enc_private_msg_from_client, client_seeds[client_socket][3]) # TODO : PROB HERE
+
+                if private_msg_from_client == '!WEBCAM':
+                    clients[second_user].send(encrypt_msg('start private camera', client_seeds[clients[second_user]][3]))
+                    clients[second_user].send(encrypt_msg(user_name, client_seeds[clients[second_user]][3]))
+
+                    encrypted_video_frame = my_funcs.receive_data(client_socket)
+                    while encrypted_video_frame is not None:
+                        clients[second_user].send(encrypted_video_frame)
+                        encrypted_video_frame = my_funcs.receive_data(client_socket)
+
+                elif private_msg_from_client == 'SIGN':
+                    type_of_user = clients_users[user_name][3]
+
+                    if type_of_user == 'candidate':
+                        ID_of_person = clients_users[user_name][4]
+                        print(f'ID of {user_name} is {ID_of_person}')
+                        data_list = [str(type_of_user), str(ID_of_person)]
+                        result = start_client_func(data_list)
+
+                        if result == "ID of student didn't show up in the database of the university!".encode():
+                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                            client_socket.send(
+                                "ID of student didn't show up in the database of the university!".encode())
+                        else:
+                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                            time.sleep(0.5)
+                            client_socket.send(
+                                encrypt_msg(f'{user_name}_{ID_of_person}.txt', client_seeds[client_socket][3]))
+                            client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                    else:
+                        client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
+                        client_socket.send("You can't get a sign of a certificate if you are an employer!!!".encode())
+
+                elif private_msg_from_client == 'VERIFY':
+                    encrypted_file_name_to_verify = my_funcs.receive_data(client_socket)
+                    file_name_to_verify = decrypt_cipher(encrypted_file_name_to_verify,
+                                                         client_seeds[client_socket][3])
+
+                    type_of_user = clients_users[user_name][3]
+
+                    encrypted_block_file_verify = my_funcs.receive_data(client_socket)
+                    block_file_verify = decrypt_cipher_file(encrypted_block_file_verify,
+                                                            client_seeds[client_socket][3])
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "wb")
+                    f.write(block_file_verify)
+                    f.close()
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                    lines = f.readlines()
+                    f.close()
+
+                    student_id_line = ""
+
+                    for line in lines:
+                        if "Student ID" in line:
+                            student_id_line = line
+                            break
+
+                    if student_id_line != "":
+                        ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
+                        print("ID FOUND : " + ID_of_person)
+                    else:
+                        ID_of_person = "35"
+                        print("ID NOT FOUND!!! ID SET TO DEFAULT VALUE OF 35")
+
+                    f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
+                    text_to_verify = f.read()
+                    f.close()
+                    data_list = [type_of_user, ID_of_person, text_to_verify]
+
+                    result = start_client_func(data_list)
+                    os.remove(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}")
+                    client_socket.send(encrypt_msg("verification", client_seeds[client_socket][3]))
+
+                    if type_of_user == 'employer':
+                        client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
+                    else:
+                        client_socket.send("You can't verify a document if you are a candidate!!!".encode())
+
+                elif private_msg_from_client == 'FILE':  # the user wants to send a file
+                    enc_file_name = my_funcs.receive_data(client_socket)
+                    file_name = decrypt_cipher(enc_file_name, client_seeds[client_socket][3])
+                    if file_name == 'File not accessible':  # the path of the file is invalid
+                        continue
+                    enc_file_name_hmac = my_funcs.receive_data(client_socket)
+                    file_name_hmac = decrypt_cipher(enc_file_name_hmac, client_seeds[client_socket][3])
+
+                    # TODO : CHANGE FOR MY HMAC
+                    if hmac.new(str(client_seeds[client_socket][2]).encode(), file_name.encode(),
+                                hashlib.sha256).hexdigest() == file_name_hmac:  # check the integrity of the file name
+                        f = open(f"server_temp_file.{file_name.split('.')[-1]}", "wb")
+                        real_digest_maker = hmac.new(str(client_seeds[client_socket][2]).encode(), ''.encode(), hashlib.sha256)
+
+                        encrypted_block_file = my_funcs.receive_data(client_socket)
+                        block_file = decrypt_cipher_file(encrypted_block_file, client_seeds[client_socket][3])
+
+                        while block_file != b'0':  # get the file and write it to the temporary file
+                            print('*')
+                            f.write(block_file)
+                            real_digest_maker.update(block_file)
+                            encrypted_block_file = my_funcs.receive_data(client_socket)
+                            block_file = decrypt_cipher_file(encrypted_block_file, client_seeds[client_socket][3])
+                            print(block_file)
+                        f.close()
+
+                        real_digest = real_digest_maker.hexdigest()
+                        print(f'hmac for the content in the file that sent {real_digest}')
+
+                        enc_body_file_hmac = my_funcs.receive_data(client_socket)
+                        body_file_hmac = decrypt_cipher(enc_body_file_hmac, client_seeds[client_socket][3])
+
+                        print(f'hmac for the real file {body_file_hmac}')
+
+                        if real_digest == body_file_hmac:  # check the integrity of the file body
+                            print(f'The FILE sent from {user_name} is original')
+                            clients[second_user].send(encrypt_msg('get file photo', client_seeds[clients[second_user]][3]))
+                            time.sleep(0.5)
+                            clients[second_user].send(encrypt_msg(f'{user_name}_{os.path.basename(file_name)}', client_seeds[clients[second_user]][3]))
+                            time.sleep(0.1)
+
+                            hmac_for_private_clients = {}
+
+                            hmac_for_private_clients[clients[second_user]] = hmac.new(
+                                str(client_seeds[clients[second_user]][2]).encode(), ''.encode(), hashlib.sha256)
+
+                            f = open(f"server_temp_file.{file_name.split('.')[-1]}", "rb")
+
+                            block = f.read(1024)
+                            while block:  # sending each file block to all the client in the room
+                                hmac_for_private_clients[clients[second_user]].update(block)
+                                clients[second_user].send(encrypt_msg_file(block, client_seeds[clients[second_user]][3]))
+                                time.sleep(0.1)
+                                block = f.read(1024)
+                            f.close()
+
+                            # os.remove("server_temp_file.txt")  # remove the temp file
+
+                            os.remove(f"server_temp_file.{file_name.split('.')[-1]}")  # remove the temporary file we created
+                            time.sleep(0.5)
+                            clients[second_user].send(encrypt_msg_file(b'0', client_seeds[clients[second_user]][3]))
+                            time.sleep(0.1)
+                            clients[second_user].send(encrypt_msg(hmac_for_private_clients[clients[second_user]].hexdigest(),
+                                                               client_seeds[clients[second_user]][3]))
+                            hmac_for_private_clients.clear()
+                        else:
+                            print(f'Something change in the FILE sent from {user_name} 2')
+                    else:
+                        print(f'Something change in the FILE sent from {user_name} 1')
+
+                else:
+                    clients[second_user].send(encrypt_msg(private_msg_from_client, client_seeds[clients[second_user]][3]))
 
         else:
             if [user_name, 'accepted request'] in private_sessions.values():    # part 5 - current user is the second user
@@ -412,101 +724,6 @@ def session_with_client(client_socket):  # start the session
                                 string_to_send = f'{to_who} is currently offline.'
 
                         client_socket.send(encrypt_msg(string_to_send, client_seeds[client_socket][3]))
-
-                    elif msg_from_client == 'VERIFY':
-                        encrypted_file_name_to_verify = my_funcs.receive_data(client_socket)
-                        file_name_to_verify = decrypt_cipher(encrypted_file_name_to_verify, client_seeds[client_socket][3]) # PROB HERE
-
-                        type_of_user = clients_users[user_name][3]
-
-                        encrypted_block_file_verify = my_funcs.receive_data(client_socket)
-                        block_file_verify = decrypt_cipher_file(encrypted_block_file_verify,
-                                                                client_seeds[client_socket][3])
-
-                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "wb")
-                        f.write(block_file_verify)
-                        f.close()
-
-                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
-                        lines = f.readlines()
-                        f.close()
-
-                        student_id_line = ""
-
-                        for line in lines:
-                            if "Student ID" in line:
-                                student_id_line = line
-                                break
-
-                        if student_id_line != "":
-                            ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
-                            print("ID FOUND : " + ID_of_person)
-                        else:
-                            ID_of_person = "35"
-                            print("ID NOT FOUND!!! ID SET TO DEFAULT VALUE OF 35")
-
-                        '''
-                        try:
-                            ID_of_person = student_id_line.split(':')[1][1:10]  # extract the id from the line
-                            print("THE ID OF THE PERSON WE NEED TO VERIFY IS : " + str(ID_of_person))
-                        except SyntaxError:
-                            print("Could not read correctly the id!")
-                            ID_of_person = "35"
-                        '''
-
-                        f = open(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}", "r")
-                        text_to_verify = f.read()
-                        f.close()
-                        data_list = [type_of_user, ID_of_person, text_to_verify]
-
-                        result = start_client_func(data_list)
-                        os.remove(f"server_temp_verify.{file_name_to_verify.split('.')[-1]}")
-                        client_socket.send(encrypt_msg("verification", client_seeds[client_socket][3]))
-
-                        if type_of_user == 'employer':
-                            client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
-                        else:
-                            client_socket.send("You can't verify a document if you are a candidate!!!".encode())
-
-
-                    #TODO : ADD FUNCTIONALITY TO SOMEONE WHO DIDN'T STUDY IN THE UNIVERSITY
-                    elif msg_from_client == 'SIGN':
-                        type_of_user = clients_users[user_name][3]
-
-                        if type_of_user == 'candidate':
-                            ID_of_person = clients_users[user_name][4]
-                            print(f'ID of {user_name} is {ID_of_person}')
-                            data_list = [str(type_of_user), str(ID_of_person)]
-                            result = start_client_func(data_list)
-
-                            if result == "ID of student didn't show up in the database of the university!".encode():
-                                client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
-                                client_socket.send("ID of student didn't show up in the database of the university!".encode())
-                            else:
-                                client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
-                                time.sleep(0.5)
-                                client_socket.send(encrypt_msg(f'{user_name}_{ID_of_person}.txt', client_seeds[client_socket][3]))
-                                client_socket.send(encrypt_msg(result, client_seeds[client_socket][3]))
-                        else:
-                            client_socket.send(encrypt_msg('sign document', client_seeds[client_socket][3]))
-                            client_socket.send("You can't get a sign of a certificate if you are an employer!!!".encode())
-
-                    elif msg_from_client == 'WEBCAM':  # the user wants to open his camera
-                        for others_clients in clients.values():
-                            if others_clients is not client_socket:
-                                if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
-                                    others_clients.send(encrypt_msg('start camera', client_seeds[others_clients][3]))
-                                    others_clients.send(encrypt_msg(user_name, client_seeds[others_clients][3]))
-
-                        encrypted_video_frame = my_funcs.receive_data(client_socket)
-                        while encrypted_video_frame is not None:
-                            for others_clients in clients.values():
-                                if others_clients is not client_socket:
-                                    if others_clients not in [clients[c] for c in private_sessions.keys()] and others_clients not in [clients[private_sessions[c][0]] for c in private_sessions.keys()]:
-                                        others_clients.send(encrypted_video_frame)
-
-                            encrypted_video_frame = my_funcs.receive_data(client_socket)
-
 
                     elif msg_from_client == 'FILE':  # the user wants to send a file
                         enc_file_name = my_funcs.receive_data(client_socket)

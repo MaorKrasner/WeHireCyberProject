@@ -85,10 +85,11 @@ def key_exchange(server_socket, p, q, x):
     dec_b = my_funcs.rsa_encryption_decryption(p * q, y, enc_b)
     print(f'b    {dec_b}')
 
-
-
     return [dec_seed, int(str(dec_a) + str(dec_b)), int(str(dec_b) + str(dec_a))]
 
+
+def get_private_flag_value():
+    return private_flag
 
 def key_exchange_for_private(server_socket, p, q, x):
     y = 0
@@ -164,48 +165,6 @@ def decrypt_cipher_file(cipher, pad):
     cipher_dec = decrypt(cipher, pad_bin.encode())
     return cipher_dec
 
-def my_webcam():
-    vid = cv2.VideoCapture(0)
-
-    while vid.isOpened():
-        img, frame = vid.read()
-        frame = imutils.resize(frame, width=320)
-        a = pickle.dumps(frame)
-        message = struct.pack("Q", len(a)) + a
-
-        enc_msg = encrypt_file(message, user_pad)
-        s.send(enc_msg)
-
-        cv2.imshow('MY VIDEO', frame)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-
-def other_webcam(from_who):
-    data = b""
-    payload_size = struct.calcsize("Q")
-    while True:
-        while len(data) < payload_size:
-            packet = my_funcs.receive_data(s)
-            msg = decrypt_cipher_file(packet, user_pad)
-            if not packet:
-                break
-            data += msg
-        packed_msg_size = data[:payload_size]
-        data = data[payload_size:]
-        msg_size = struct.unpack("Q", packed_msg_size)[0]
-
-        while len(data) < msg_size:
-            data += my_funcs.receive_data(s)
-            msg = decrypt_cipher_file(data, user_pad)
-        frame_data = msg[:msg_size]
-        msg = msg[msg_size:]
-        frame = pickle.loads(frame_data)
-        cv2.imshow(f'{from_who} VIDEO', frame)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('q'):
-            break
-
 def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
     global private_flag
     while True:
@@ -256,92 +215,6 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                     text_box.see(END)
                     continue
 
-            elif msg_from_server == 'sign document':
-                encrypted_response_about_sign = my_funcs.receive_data(s)
-
-                if encrypted_response_about_sign == "You can't get a sign of a certificate if you are an employer!!!".encode():
-                    text_box.configure(state=NORMAL)
-                    text_box.insert(END, "You can't get a sign of a certificate if you are an employer!!!")
-                    text_box.insert(END, '\n')
-                    text_box.configure(state=DISABLED)
-                    text_box.see(END)
-
-                elif encrypted_response_about_sign == "ID of student didn't show up in the database of the university!".encode():
-                    text_box.configure(state=NORMAL)
-                    text_box.insert(END, "Your ID didn't show up in the database of the university!")
-                    text_box.insert(END, '\n')
-                    text_box.configure(state=DISABLED)
-                    text_box.see(END)
-
-                else:
-                    verified_file_name_from_server = decrypt_cipher(encrypted_response_about_sign, pad)
-
-                    f = open(verified_file_name_from_server, 'wb')
-                    enc_block_file = my_funcs.receive_data(s)
-                    block_file = decrypt_cipher(enc_block_file, pad)
-                    f.write(block_file.encode())
-                    f.close()
-
-                    text_box.configure(state=NORMAL)
-                    text_box.insert(END, f'{verified_file_name_from_server} file successfully downloaded')
-                    text_box.insert(END, '\n')
-                    text_box.configure(state=DISABLED)
-                    text_box.see(END)
-
-            elif msg_from_server == 'verification':
-                encrypted_verification_result = my_funcs.receive_data(s)
-
-                if encrypted_verification_result == "You can't verify a document if you are a candidate!!!".encode():
-                    text_box.configure(state=NORMAL)
-                    text_box.insert(END, "You can't verify a document if you are a candidate!!!")
-                    text_box.insert(END, '\n')
-                    text_box.configure(state=DISABLED)
-                    text_box.see(END)
-
-                else:
-                    verification_result = decrypt_cipher(encrypted_verification_result, pad)
-                    if verification_result == 'True':
-                        text_box.configure(state=NORMAL)
-                        text_box.insert(END, f'The filed you verified is real')
-                        text_box.insert(END, '\n')
-                        text_box.configure(state=DISABLED)
-                        text_box.see(END)
-                    else:
-                        text_box.configure(state=NORMAL)
-                        text_box.insert(END, f'The filed you verified is fake/changed')
-                        text_box.insert(END, '\n')
-                        text_box.configure(state=DISABLED)
-                        text_box.see(END)
-
-            elif msg_from_server == 'start camera':
-                enc_from_who = my_funcs.receive_data(s)
-                from_who = decrypt_cipher(enc_from_who, pad)
-
-                data = b""
-                payload_size = struct.calcsize("Q")
-                while True:
-                    while len(data) < payload_size:
-                        packet = my_funcs.receive_data(s)
-                        #msg = decrypt_cipher_file(packet, user_pad)
-                        if not packet:
-                            break
-                        data += packet
-                    packed_msg_size = data[:payload_size]
-                    data = data[payload_size:]
-                    msg_size = struct.unpack("Q", packed_msg_size)[0]
-
-                    while len(data) < msg_size:
-                        data += my_funcs.receive_data(s)
-                        #msg = decrypt_cipher_file(data, user_pad)
-                    frame_data = data[:msg_size]
-                    data = data[msg_size:]
-                    frame = pickle.loads(frame_data)
-                    cv2.imshow(f'{from_who} VIDEO', frame)
-                    key = cv2.waitKey(1) & 0xFF
-                    if key == 20:
-                        break
-                cv2.destroyAllWindows()
-
             elif msg_from_server == 'creator_rsa':    # the client that wants to start private session, create the keys
                 key_exchange_for_private(s, random.choice(primes), random.choice(primes),
                                          random.randint(10, 100))
@@ -374,7 +247,7 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
         else:                                                       # the client in a private session
             enc_private_msg_from_server = my_funcs.receive_data(s)
             if enc_private_msg_from_server == '1'.encode():        # exit from the private session
-                s.send('stam'.encode())
+                s.send(encrypt_msg('stam', pad))
                 private_flag = False
                 data_list_for_private.clear()
 
@@ -384,11 +257,140 @@ def recive_ongoing_msg_from_chat_server_func_gui(s, pad, text_box):
                 text_box.insert(END, '\n')
                 text_box.configure(state=DISABLED)
                 text_box.see(END)
-            else:
-                if private_flag:
-                    #private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, data_list_for_private[-1]) # list index out of range
-                    private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, pad)  # list index out of range
 
+            else:
+                private_msg_from_server = decrypt_cipher(enc_private_msg_from_server, pad)  # list index out of range
+
+                if private_msg_from_server == 'start private camera':
+                    enc_from_who = my_funcs.receive_data(s)
+                    from_who = decrypt_cipher(enc_from_who, pad)
+
+                    data = b""
+                    payload_size = struct.calcsize("Q")
+                    while True:
+                        c = 0
+                        while len(data) < payload_size:
+                            packet = my_funcs.receive_data(s)
+                            # msg = decrypt_cipher_file(packet, user_pad)
+                            if not packet:
+                                break
+                            data += packet
+                        packed_msg_size = data[:payload_size]
+                        data = data[payload_size:]
+                        msg_size = struct.unpack("Q", packed_msg_size)[0]
+
+                        while len(data) < msg_size:
+                            data += my_funcs.receive_data(s)
+                            # msg = decrypt_cipher_file(data, user_pad)
+                        frame_data = data[:msg_size]
+                        data = data[msg_size:]
+                        frame = pickle.loads(frame_data)
+                        cv2.imshow(f'{from_who} VIDEO', frame)
+                        key = cv2.waitKey(1) & 0xFF
+                        if key == 32:  # space bar
+                            break
+
+                        c += 1
+                        if c > 199:
+                            cv2.destroyAllWindows()
+                            break
+
+                elif private_msg_from_server == 'get file photo':  # download a file
+                    enc_file_name_from_server = my_funcs.receive_data(s)
+                    file_name_from_server = decrypt_cipher(enc_file_name_from_server, pad)
+                    f = open(f'{user_name}_from_{file_name_from_server}', "wb")
+
+                    enc_block_file = my_funcs.receive_data(s)
+                    block_file = decrypt_cipher_file(enc_block_file, pad)
+                    digest_maker = hmac.new(str(seed_server).encode(), ''.encode(), hashlib.sha256)
+
+                    while block_file != b'0':
+                        f.write(block_file)
+                        digest_maker.update(block_file)
+                        enc_block_file = my_funcs.receive_data(s)
+                        block_file = decrypt_cipher_file(enc_block_file, pad)
+
+                    f.close()
+
+                    rec_digest = digest_maker.hexdigest()
+                    print(f'hmac for the content in the file that sent {rec_digest}')
+                    enc_real_digest = my_funcs.receive_data(s)
+                    real_digest = decrypt_cipher(enc_real_digest, pad)
+                    print(f'hmac for the real file {real_digest}')
+
+                    if real_digest == rec_digest:
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, f'{file_name_from_server} file successfully downloaded')
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+                        continue
+                    else:
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, f'{file_name_from_server} file is distorted')
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+                        continue
+
+                elif private_msg_from_server == 'sign document':
+                    encrypted_response_about_sign = my_funcs.receive_data(s)
+
+                    if encrypted_response_about_sign == "You can't get a sign of a certificate if you are an employer!!!".encode():
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, "You can't get a sign of a certificate if you are an employer!!!")
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+
+                    elif encrypted_response_about_sign == "ID of student didn't show up in the database of the university!".encode():
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, "Your ID didn't show up in the database of the university!")
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+
+                    else:
+                        verified_file_name_from_server = decrypt_cipher(encrypted_response_about_sign, pad)
+
+                        f = open(verified_file_name_from_server, 'wb')
+                        enc_block_file = my_funcs.receive_data(s)
+                        block_file = decrypt_cipher(enc_block_file, pad)
+                        f.write(block_file.encode())
+                        f.close()
+
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, f'{verified_file_name_from_server} file successfully downloaded')
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+
+                elif private_msg_from_server == 'verification':
+                    encrypted_verification_result = my_funcs.receive_data(s)
+
+                    if encrypted_verification_result == "You can't verify a document if you are a candidate!!!".encode():
+                        text_box.configure(state=NORMAL)
+                        text_box.insert(END, "You can't verify a document if you are a candidate!!!")
+                        text_box.insert(END, '\n')
+                        text_box.configure(state=DISABLED)
+                        text_box.see(END)
+
+                    else:
+                        verification_result = decrypt_cipher(encrypted_verification_result, pad)
+                        if verification_result == 'True':
+                            text_box.configure(state=NORMAL)
+                            text_box.insert(END, f'The filed you verified is real')
+                            text_box.insert(END, '\n')
+                            text_box.configure(state=DISABLED)
+                            text_box.see(END)
+                        else:
+                            text_box.configure(state=NORMAL)
+                            text_box.insert(END, f'The filed you verified is fake/changed')
+                            text_box.insert(END, '\n')
+                            text_box.configure(state=DISABLED)
+                            text_box.see(END)
+
+                else:
                     print(private_msg_from_server)
 
                     text_box.configure(state=NORMAL)
@@ -497,11 +499,124 @@ def session_func(user_msg, textbox):
             s.send(user_msg.encode())
             data_list_for_private.clear()
             return 'continue'
+
+        elif user_msg == '!WEBCAM':
+            c = 0
+            enc_msg_to_send = encrypt_msg(user_msg, user_pad)
+            s.send(enc_msg_to_send)
+            time.sleep(0.01)
+            vid = cv2.VideoCapture(0)
+            while vid.isOpened():
+                c += 1
+                img, frame = vid.read()
+                frame = imutils.resize(frame, width=320)
+                a = pickle.dumps(frame)
+                message = struct.pack("Q", len(a)) + a
+                # enc_msg = encrypt_file(message, user_pad)
+                s.send(message)
+                cv2.imshow('MY VIDEO', frame)
+                key = cv2.waitKey(1) & 0xFF
+                print(c)
+                if c > 199:
+                    cv2.destroyAllWindows()
+                    break
+            return
+
+        if verify_flag:
+            try:
+                f = open(user_msg)
+                f.close()
+            except IOError:
+                print("File not accessible")
+                enc_file_name_to_send = encrypt_msg('File not accessible', user_pad)
+                s.send(enc_file_name_to_send)
+                hmac_flag_photo = False
+                return 'File not accessible'
+
+            enc_file_name_to_send = encrypt_msg(user_msg, user_pad)
+            s.send(enc_file_name_to_send)
+
+            f = open(user_msg, 'rb')
+            block_to_verify = f.read()
+            encrypted_block = encrypt_file(block_to_verify, user_pad)
+            s.send(encrypted_block)
+            f.close()
+
+            verify_flag = False
+            return 'sent'
+
+        #  FILES
+        if hmac_flag_photo:  # send file
+            try:
+                f = open(user_msg)
+                f.close()
+            except IOError:
+                print("File not accessible")
+                enc_file_name_to_send = encrypt_msg('File not accessible', user_pad)
+                s.send(enc_file_name_to_send)
+                hmac_flag_photo = False
+                return 'File not accessible'
+
+            enc_file_name_to_send = encrypt_msg(user_msg, user_pad)
+            s.send(enc_file_name_to_send)
+
+            file_name_hmac = hmac.new(str(seed_server).encode(), user_msg.encode(), hashlib.sha256).hexdigest()
+            enc_file_name_hmac_to_send = encrypt_msg(file_name_hmac, user_pad)
+            s.send(enc_file_name_hmac_to_send)
+
+            digest_maker = hmac.new(str(seed_server).encode(), ''.encode(), hashlib.sha256)
+            try:
+                f = open(user_msg, 'rb')
+                try:
+                    block = f.read(1024)
+                    while block:
+                        digest_maker.update(block)
+                        print('*')
+                        print(block)
+                        enc_block_to_send = encrypt_file(block, user_pad)
+                        print('**')
+                        print(enc_block_to_send)
+                        if hack_flag:  # somebody changed the file
+                            s.send(len(enc_block_to_send) * b'0')
+                        else:
+                            s.send(enc_block_to_send)
+                        block = f.read(1024)
+                finally:
+                    f.close()
+                    hack_flag = False
+                time.sleep(0.2)
+                enc_block_to_send = encrypt_file(b'0', user_pad)
+                s.send(enc_block_to_send)
+
+                time.sleep(0.05)
+
+                digest = digest_maker.hexdigest()
+                print(f'hmac for the real file {digest}')
+
+                enc_digest_to_send = encrypt_msg(digest, user_pad)
+                s.send(enc_digest_to_send)
+
+            except:
+                pass
+            hmac_flag_photo = False
+            return 'sent'
+
+        if user_msg == 'FILE':
+            hmac_flag_photo = True
+
+        if user_msg == 'VERIFY':
+            verify_flag = True
+
+        if user_msg == 'HACK':  # information is interrupted
+            hack_flag = True
+            return
+
         else:
             #enc_private_msg_to_send = encrypt_msg(user_msg, data_list_for_private[-1])
             enc_private_msg_to_send = encrypt_msg(user_msg, user_pad)
             s.send(enc_private_msg_to_send)
             return 'continue'
+
     else:
         if user_msg == '1' or user_msg == '***delete_account***':   # exit
             enc_msg_to_send = encrypt_msg(user_msg, user_pad)
@@ -533,7 +648,6 @@ def session_func(user_msg, textbox):
                 try:
                     block = f.read(1024)
                     while block:
-                        # print('*')
                         digest_maker.update(block)
                         print('*')
                         print(block)
@@ -544,10 +658,6 @@ def session_func(user_msg, textbox):
                             s.send(len(enc_block_to_send) * b'0')
                         else:
                             s.send(enc_block_to_send)
-                        # print(block)
-                        # print(block.decode())  # block
-                        # print('***')
-
                         block = f.read(1024)
                 finally:
                     f.close()
@@ -569,65 +679,14 @@ def session_func(user_msg, textbox):
             hmac_flag_photo = False
             return 'sent'
 
-        if verify_flag:
-            try:
-                f = open(user_msg)
-                f.close()
-            except IOError:
-                print("File not accessible")
-                enc_file_name_to_send = encrypt_msg('File not accessible', user_pad)
-                s.send(enc_file_name_to_send)
-                hmac_flag_photo = False
-                return 'File not accessible'
-
-            enc_file_name_to_send = encrypt_msg(user_msg, user_pad)
-            s.send(enc_file_name_to_send)
-
-            f = open(user_msg, 'rb')
-            block_to_verify = f.read()
-            encrypted_block = encrypt_file(block_to_verify, user_pad)
-            s.send(encrypted_block)
-            f.close()
-
-            verify_flag = False
-            return 'sent'
-
         if user_msg == 'FILE':
             hmac_flag_photo = True
 
-        if user_msg == 'VERIFY':
-            verify_flag = True
-
         if user_msg == 'HACK':     # information is interrupted
             hack_flag = True
-            return
-
-        #  webcam share
-        if user_msg == 'WEBCAM':
-            c = 0
-            enc_msg_to_send = encrypt_msg(user_msg, user_pad)
-            s.send(enc_msg_to_send)
-            time.sleep(0.01)
-            vid = cv2.VideoCapture(0)
-            while vid.isOpened():
-                #c += 1
-                img, frame = vid.read()
-                frame = imutils.resize(frame, width=320)
-                a = pickle.dumps(frame)
-                message = struct.pack("Q", len(a)) + a
-                # enc_msg = encrypt_file(message, user_pad)
-                s.send(message)
-                cv2.imshow('MY VIDEO', frame)
-                key = cv2.waitKey(1) & 0xFF
-                print(c)
-                #if c < 60000000:
-                #    cv2.destroyAllWindows()
-                #    break
             return
 
         else:
             enc_msg_to_send = encrypt_msg(user_msg, user_pad)
             s.send(enc_msg_to_send)
             return 'continue'
-
-#start()

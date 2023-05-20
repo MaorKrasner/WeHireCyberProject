@@ -94,7 +94,11 @@ class ChatApplication:
             self.msg_entry.delete(0, END)
             self.insert_message(msg)
         else:
-            self.browseFilesForVerify()
+            res = ChatDirectory.client_chat.get_private_flag_value()
+            if res:
+                self.browseFilesForVerify()
+            else:
+                self.insert_message(msg)
 
     def insert_message(self, msg):
         if not msg or [x for x in msg] == [' ' for x in range(len(msg))]:
