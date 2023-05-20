@@ -2,11 +2,12 @@ import os
 import sqlite3
 from UniversityDirectory import my_hmac_functions
 
-conn = sqlite3.connect('C://Users//maork//OneDrive//Desktop//WeHireCyberProject//UniversityDirectory//UniversityDatabase.db', check_same_thread=False)
+conn = sqlite3.connect("/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityDirectory/UniversityDatabase.db", check_same_thread=False)
 
 cursor = conn.cursor()
 
-# university_directory_path = "/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityStudentsDiplomasFolder/"  # FOR MAC
+#university_directory_path_pc = 'C://Users//maork//OneDrive//Desktop//WeHireCyberProject//UniversityDirectory//UniversityDatabase.db'
+#university_directory_path_mac = "/Users/maorkrasner/Desktop/WeHireCyberProject/UniversityDirectory/UniversityDatabase.db"  # FOR MAC
 university_directory_path = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')) + "\\UniversityStudentsDiplomasFolder" + "\\"
 
 
