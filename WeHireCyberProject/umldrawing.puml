@@ -1,0 +1,62 @@
+@startuml
+'https://plantuml.com/class-diagram
+
+class candidate_create_account_page_gui
+class chat_database_management
+class chat_gui
+class chat_info_gui
+class client_chat
+class client_login_page_gui
+class client_start_gui
+class employer_create_account_page_gui
+class my_funcs
+class otp_funcs
+class server_chat
+
+class file_convertor
+class my_hmac_functions
+class my_sha256
+class university_client
+class university_database_management
+class university_server
+
+client_start_gui <|-- client_chat
+client_start_gui <|-- candidate_create_account_page_gui
+client_start_gui <|-- employer_create_account_page_gui
+client_start_gui <|-- client_login_page_gui
+
+client_login_page_gui <|-- client_chat
+client_login_page_gui <|-- chat_gui
+
+candidate_create_account_page_gui <|-- client_chat
+candidate_create_account_page_gui <|-- client_login_page_gui
+
+employer_create_account_page_gui <|-- client_chat
+employer_create_account_page_gui <|-- client_login_page_gui
+
+chat_gui <|-- client_chat
+chat_gui <|-- chat_info_gui
+
+client_chat <|-- my_funcs
+client_chat <|-- otp_funcs
+client_chat <|-- client_start_gui
+
+server_chat <|-- my_funcs
+server_chat <|-- otp_funcs
+server_chat <|-- chat_database_management
+server_chat <|-- university_database_management
+
+my_hmac_functions <|-- my_sha256
+
+university_database_management <|-- file_convertor
+university_database_management <|-- my_hmac_functions
+
+university_client <|-- my_funcs
+university_client <|-- otp_funcs
+
+university_server <|-- my_funcs
+university_server <|-- otp_funcs
+university_server <|-- university_database_management
+
+
+@enduml

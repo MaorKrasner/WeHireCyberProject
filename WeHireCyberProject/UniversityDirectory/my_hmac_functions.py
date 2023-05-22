@@ -1,7 +1,7 @@
 from UniversityDirectory.my_sha256 import Sha256
 
 def hmac_sign_with_sha256(key, message):
-    block_size = 64  # 64 bytes (512 bits) for SHA-256
+    block_size = 64  # 64 nibbles (256 bits) for SHA-256
 
     # if the key is longer than the block size, hash it and resize it to be 64 bytes long
     if len(key) > block_size:
